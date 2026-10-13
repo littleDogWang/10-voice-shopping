@@ -1,0 +1,23 @@
+{
+  "version": "2026-10-12",
+  "products": [
+    {
+      "productId": "MIC-100",
+      "name": "Agora Desk Mic",
+      "category": "microphone",
+      "price": 129,
+      "currency": "USD",
+      "attributes": ["usb", "noise reduction", "desk"] ,
+      "stock": 12
+    },
+    {
+      "productId": "CAM-200",
+      "name": "Agora Room Camera",
+      "category": "camera",
+      "price": 249,
+      "currency": "USD",
+      "attributes": ["wide angle", "room", "usb"],
+      "stock": 0
+    }
+  ]
+}
