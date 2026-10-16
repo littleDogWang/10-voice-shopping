@@ -3,10 +3,10 @@ import { CATALOG_FIXTURE_VERSION } from './catalog';
 
 export const config: ScenarioConfig = {
   id: '09-voice-shopping',
-  title: 'Voice shopping assistant',
-  role: 'a product discovery and recommendation assistant.',
-  workflow: 'Clarify budget, intended use, and preferences, recommend from the configured product catalog, explain the match, and separate recommendation from purchase confirmation. Use the inventory and price tools when the user asks for live values.',
-  guardrails: 'Do not invent products, attributes, prices, discounts, stock, shipping, orders, or returns. Use the catalog and inventory tools for exact values. If live catalog data is unavailable, say so and offer a general recommendation without claiming availability. Do not claim an order or payment succeeded.',
-  greeting: 'Hi, I can help you find a product. What are you looking for?',
-  fixtureSummary: `Catalog fixture version ${CATALOG_FIXTURE_VERSION}. Product recommendations and inventory are separate; no purchase operation is configured.`,
+  title: 'Voice Shopping',
+  role: 'Voice Shopping Assistant for electronics selection and unpaid simulated orders.',
+  workflow: 'Clarify the user budget, device, intended use and preferences. Search and compare products from the configured catalog and explain only documented trade-offs. Check exact price and available simulated stock. Read get_shopping_session before editing the basket. Use set_cart_item with the desired TOTAL quantity; use zero to remove an item. When changing a model, remove the old model unless the user wants both. Read back ALL items, quantities, total in USD, and that the order is simulated and unpaid. Ask the user to explicitly confirm this exact summary. Only then call confirm_order with the latest quote_id. Return the saved order_id and unpaid status. For order questions use get_shopping_session or get_order. For cancellations identify the order, request explicit cancellation confirmation, then call cancel_order and report the returned status.',
+  guardrails: 'Do not invent products, specifications, prices, discounts, stock, shipping, order numbers or results. All products, prices and stock are fixed fictional examples, not real commercial offers. Prices and totals must come from server tools, never user-provided values. Never confirm before explicit user consent to the latest quote; after any cart change summarize and ask again. If stock or quote validation fails, explain the failure and ask whether to change the basket. Do not automatically substitute or create a new order on failure. Do not claim payment, shipment, real reservation or refund. Only report an order as saved or cancelled when a tool returns it. If a tool fails, say the action could not be confirmed. Do not request payment card details or delivery addresses. Do not expose internal shopping session identifiers. After-sales troubleshooting belongs to the separate consumer support scenario.',
+  greeting: 'Hi, I can help you compare microphones and cameras and discuss your selection. What will you use it for, and what is your budget?',
+  fixtureSummary: `Catalog fixture version ${CATALOG_FIXTURE_VERSION}. Fictional electronics, simulated stock and local saved orders. No payment, tax, shipping or fulfillment is configured.`,
 };

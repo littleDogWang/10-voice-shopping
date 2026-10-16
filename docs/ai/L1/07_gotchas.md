@@ -1,5 +1,10 @@
 # 07 Gotchas
 
+
+## Scenario 09 current behavior
+
+Shopping quotes do not reserve inventory. Confirmation rechecks stock and returns 409 for stale quotes or insufficient stock, preserving the basket. A retried confirmed quote returns the original order even after cancellation. Ledger storage needs a single persistent Node process; ephemeral or multi-process deployment is unsupported. Bearer session ids are not customer authentication. Do not call local route acceptance live voice verification.
+
 > High-impact pitfalls that regularly break session startup, transcript rendering, or lifecycle cleanup.
 
 ## Critical Runtime Pitfalls

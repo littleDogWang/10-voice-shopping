@@ -81,3 +81,14 @@ Do not recreate Agora ConvoAI integration from memory. Provider schemas, SDK bui
 3. Run `pnpm run doctor` and `pnpm run dev`.
 4. Validate with `pnpm run verify` before sharing modifications.
 5. Customize agent behavior and UI using the supported surfaces above.
+
+## Scenario 09 derivative
+
+This checkout extends the base recipe with fixed-catalog shopping and local unpaid simulated orders. The invite contract additionally requires shopping_session_id. Catalog/basket/order tools bind that session and require a configured public HTTPS tool origin. The browser and voice share the same file-backed session. See the root README and scenario design for persistence limits and HTTP shapes. UI uses vendored agent-ui source; RTC/RTM/token and StrictMode invariants remain those of the base recipe.
+
+
+## Local conversation and optional tools
+
+Default conversations append catalog.json products, attributes, USD prices and fixed fictional stock to the prompt. The assistant can compare products and summarize purchase intent and estimated totals; it cannot update the browser basket, create server quotes, save/cancel orders or reserve stock. Browser business APIs remain available independently. A public HTTPS tool origin enables the existing seven session-bound tools; tool-mode facts and outcomes require successful responses, with no fixture fallback.
+
+TOP_TEN_SCENARIO_TOOL_BASE_URL is optional. Only an explicitly configured public HTTPS endpoint enables tools; malformed, HTTP, localhost and local/private origins leave tools disabled. URL validation does not prove network reachability. No tunnel, knowledge base or database is needed for the default conversation. Local checks do not establish live speech or cloud callback acceptance.

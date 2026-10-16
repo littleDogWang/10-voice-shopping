@@ -1,5 +1,10 @@
 # 06 Interfaces
 
+
+## Scenario 09 current behavior
+
+Invite additionally requires shopping_session_id. TOP_TEN_SCENARIO_TOOL_BASE_URL optionally enables voice tools; without it, voice uses local catalog facts without basket/order actions. Shopping root: /api/scenarios/09-voice-shopping. POST /sessions creates a capability session; GET /sessions/{id} reads cart/orders; POST /sessions/{id}/cart sets product_id and quantity (0 removes); POST /sessions/{id}/orders accepts quote_id and confirmed:true; GET /sessions/{id}/orders lists orders; GET/POST /sessions/{id}/orders/{orderId} queries/cancels (POST requires confirmed:true). GET /products supports q/category/max_price; GET /inventory returns simulated availability. All writes return the updated session. Orders are unpaid or cancelled, never paid. See root README for exact shapes and error codes.
+
 > Contracts at repo boundaries: API routes, env vars, runtime events, and shared TypeScript payloads.
 
 ## HTTP Route Contracts
@@ -99,3 +104,10 @@ From `types/conversation.ts` (high-use):
 
 - [conversation_lifecycle.md](L2/conversation_lifecycle.md) — How route contracts are used in sequence.
 - [transcript_pipeline.md](L2/transcript_pipeline.md) — Event-level contract mapping.
+
+
+## Local conversation and optional tools
+
+Default conversations append catalog.json products, attributes, USD prices and fixed fictional stock to the prompt. The assistant can compare products and summarize purchase intent and estimated totals; it cannot update the browser basket, create server quotes, save/cancel orders or reserve stock. Browser business APIs remain available independently. A public HTTPS tool origin enables the existing seven session-bound tools; tool-mode facts and outcomes require successful responses, with no fixture fallback.
+
+TOP_TEN_SCENARIO_TOOL_BASE_URL is optional. Only an explicitly configured public HTTPS endpoint enables tools; malformed, HTTP, localhost and local/private origins leave tools disabled. URL validation does not prove network reachability. No tunnel, knowledge base or database is needed for the default conversation. Local checks do not establish live speech or cloud callback acceptance.

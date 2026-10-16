@@ -1,6 +1,6 @@
 # Agora Conversational AI Next.js Quickstart — Repo Card
 
-> Official Next.js quickstart for building browser-based voice AI agents with Agora Conversational AI Engine.
+> Scenario 09 Voice Shopping, derived from the official Next.js quickstart for building browser-based voice AI agents with Agora Conversational AI Engine.
 
 ## Identity
 
@@ -14,7 +14,7 @@
 | Recipe Role | base |
 | Recipe Version | 0.1.0 |
 | Recipe Status | stable |
-| Last Reviewed | 2026-09-18 |
+| Last Reviewed | 2026-10-16 |
 
 ## L1 — Summaries
 

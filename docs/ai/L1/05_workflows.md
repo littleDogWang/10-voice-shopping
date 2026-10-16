@@ -1,5 +1,10 @@
 # 05 Workflows
 
+
+## Scenario 09 current behavior
+
+Shopping acceptance: run pnpm run verify:shopping, verify:scenario and verify. Inspect the actual desktop/mobile entry, comparison, populated basket, confirmation, unpaid saved order, refresh and cancellation. Live voice needs a public HTTPS tool origin and real speech acceptance; route tests and browser clicks do not establish model confirmation behavior.
+
 > Repeatable task recipes for common quickstart changes and validation loops.
 
 ## Run Locally

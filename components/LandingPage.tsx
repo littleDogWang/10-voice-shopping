@@ -2,7 +2,6 @@
 
 import { useState, useRef, Suspense, useEffect, useCallback } from 'react';
 import dynamic from 'next/dynamic';
-import Image from 'next/image';
 import type { RTMClient } from 'agora-rtm';
 import type {
   AgoraTokenData,
@@ -13,6 +12,10 @@ import type {
 import { ErrorBoundary } from './ErrorBoundary';
 import { LoadingSkeleton } from './LoadingSkeleton';
 import { QuickstartPreCallCard } from './QuickstartPreCallCard';
+import { ShoppingWorkbench } from './ShoppingWorkbench';
+import { useShopping } from '@/hooks/use-shopping';
+import { ConversationPanel } from './agent-ui/conversation-panel';
+import { TooltipProvider } from './ui/tooltip';
 
 // Dynamically import the ConversationComponent with ssr disabled
 const ConversationComponent = dynamic(() => import('./ConversationComponent'), {
@@ -56,6 +59,9 @@ const AgoraProvider = dynamic(
 
 export default function LandingPage() {
   const [showConversation, setShowConversation] = useState(false);
+  const [entryOpen, setEntryOpen] = useState(true);
+  const shopping = useShopping(showConversation);
+  const startPending = useRef(false);
 
   // Preload heavy modules on mount so they're already cached when the user
   // clicks "Try it Now" — eliminates the ~1.8s dynamic-import delay.
@@ -70,6 +76,8 @@ export default function LandingPage() {
   const [agentJoinError, setAgentJoinError] = useState(false);
 
   const handleStartConversation = async () => {
+    if (startPending.current || !shopping.session || showConversation) return;
+    startPending.current = true;
     setIsLoading(true);
     setError(null);
     setAgentJoinError(false);
@@ -98,6 +106,7 @@ export default function LandingPage() {
           body: JSON.stringify({
             requester_id: responseData.uid,
             channel_name: responseData.channel,
+            shopping_session_id: shopping.session.session_id,
           } as ClientStartRequest),
         })
           .then(async (res) => {
@@ -127,15 +136,22 @@ export default function LandingPage() {
         })(),
       ]);
 
+      if (!agentData) {
+        await rtm.logout();
+        throw new Error('Shopping agent startup failed');
+      }
+
       // 3. All dependencies ready — store state and show conversation
       setRtmClient(rtm);
       setAgoraData({ ...responseData, agentId: agentData?.agent_id });
       setShowConversation(true);
+      setEntryOpen(false);
     } catch (err) {
-      setError('Failed to start conversation. Please try again.');
+      setError('Voice shopping could not connect. Please try again, or continue with the product catalog.');
       console.error('Error starting conversation:', err);
     } finally {
       setIsLoading(false);
+      startPending.current = false;
     }
   };
 
@@ -202,85 +218,16 @@ export default function LandingPage() {
   };
 
   return (
-    <div className="relative flex h-dvh min-h-screen flex-col overflow-hidden bg-background text-foreground">
-      {/* Hero shell: either shows the pre-call CTA or swaps in the live conversation experience. */}
-      <div
-        className={`flex min-h-0 flex-1 flex-col ${
-          showConversation
-            ? 'items-stretch justify-start'
-            : 'items-center justify-center'
-        }`}
-      >
-        <div
-          className={`z-10 flex min-h-0 flex-1 flex-col ${
-            showConversation
-              ? 'h-full w-full max-w-none items-stretch gap-0 px-0 text-left'
-              : 'w-full max-w-none items-center justify-center px-4 text-center'
-          }`}
-        >
-          {!showConversation ? (
-            <QuickstartPreCallCard
-              isLoading={isLoading}
-              error={error}
-              onStartConversation={handleStartConversation}
-            />
-          ) : agoraData && rtmClient ? (
-            <>
-              {/* Non-fatal invite warning: the browser session can still render even if agent start failed. */}
-              {agentJoinError && (
-                <div className="p-3 bg-destructive/10 rounded-md text-destructive text-sm max-w-sm">
-                  Failed to connect with AI agent. The conversation may not work
-                  as expected.
-                </div>
-              )}
-              {/* Browser-only conversation mount: RTC provider, error boundary, and lazy-loaded call UI. */}
-              <Suspense fallback={<LoadingSkeleton />}>
-                <ErrorBoundary>
-                  <AgoraProvider>
-                    <ConversationComponent
-                      agoraData={agoraData}
-                      rtmClient={rtmClient}
-                      onTokenWillExpire={handleTokenWillExpire}
-                      onEndConversation={handleEndConversation}
-                    />
-                  </AgoraProvider>
-                </ErrorBoundary>
-              </Suspense>
-            </>
-          ) : (
-            /* Fallback if session bootstrap partially succeeded but required state is missing. */
-            <p className="text-sm text-muted-foreground">
-              Failed to load conversation data.
-            </p>
-          )}
-        </div>
-      </div>
-
-      {/* Persistent attribution footer for the pre-call and in-call views. */}
-      <footer className="fixed bottom-0 right-0 z-40 py-4 pr-4 md:py-6 md:pr-6">
-        <div className="flex items-center justify-end gap-2 text-muted-foreground">
-          <span className="text-xs font-medium tracking-wide uppercase">
-            Powered by
-          </span>
-          <a
-            href="https://agora.io/en/"
-            target="_blank"
-            rel="noopener noreferrer"
-            className="hover:text-primary transition-colors"
-            aria-label="Visit Agora's website"
-          >
-            <Image
-              src="/agora-logo-rgb-blue.svg"
-              alt="Agora"
-              width={86}
-              height={24}
-              priority
-              className="h-6 w-auto hover:opacity-80 transition-opacity translate-y-1"
-            />
-            <span className="sr-only">Agora</span>
-          </a>
-        </div>
-      </footer>
-    </div>
+    <TooltipProvider>
+      <ShoppingWorkbench shopping={shopping} voiceActive={showConversation} voiceLoading={isLoading} onStartVoice={handleStartConversation} voice={
+        showConversation && agoraData && rtmClient ? <>
+          {agentJoinError && <p role="alert" className="shopping-error">The shopping assistant could not connect. You can still use the catalog and basket.</p>}
+          <Suspense fallback={<LoadingSkeleton />}><ErrorBoundary><AgoraProvider>
+            <ConversationComponent agoraData={agoraData} rtmClient={rtmClient} onTokenWillExpire={handleTokenWillExpire} onEndConversation={handleEndConversation} />
+          </AgoraProvider></ErrorBoundary></Suspense>
+        </> : <><ConversationPanel messages={[]} />{error && <p role="alert" className="shopping-error">{error}</p>}</>
+      } />
+      <QuickstartPreCallCard open={entryOpen} onOpenChange={setEntryOpen} isLoading={isLoading} disabled={!shopping.session || shopping.loading} error={error} onStartConversation={handleStartConversation} />
+    </TooltipProvider>
   );
 }

@@ -1,5 +1,10 @@
 # 08 Security
 
+
+## Scenario 09 current behavior
+
+Shopping session ids are random bearer capabilities persisted in localStorage. Scope every basket/order route and voice tool to the current session; no all-session listing exists. Never log/share these ids or request cards/addresses. This local simulated commerce sample does not implement customer login, payments or production authorization. Store the ledger with file mode 0600; use isolated temp paths for checks. Do not expose it as a real commerce service.
+
 > Security model, trust boundaries, secret handling, and safety controls for this quickstart.
 
 ## Trust Boundaries

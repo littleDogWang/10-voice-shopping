@@ -3,6 +3,7 @@ import tseslint from 'typescript-eslint';
 
 /** @type {import('eslint').Linter.Config[]} */
 const config = [
+  { ignores: ['.next-shopping/**'] },
   ...coreWebVitals,
   {
     plugins: {

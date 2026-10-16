@@ -1,6 +1,24 @@
 {
-  "version": "2026-10-12",
+  "version": "2026-10-16",
   "products": [
+    {
+      "productId": "MIC-080",
+      "name": "Agora Mini Mic",
+      "category": "microphone",
+      "price": 79,
+      "currency": "USD",
+      "attributes": ["usb", "portable", "desk", "calls"],
+      "stock": 8
+    },
+    {
+      "productId": "MIC-150",
+      "name": "Agora Studio Mic",
+      "category": "microphone",
+      "price": 179,
+      "currency": "USD",
+      "attributes": ["usb", "noise reduction", "headphone monitoring", "recording"],
+      "stock": 4
+    },
     {
       "productId": "MIC-100",
       "name": "Agora Desk Mic",
@@ -18,6 +36,24 @@
       "currency": "USD",
       "attributes": ["wide angle", "room", "usb"],
       "stock": 0
+    },
+    {
+      "productId": "CAM-120",
+      "name": "Agora Desk Camera",
+      "category": "camera",
+      "price": 99,
+      "currency": "USD",
+      "attributes": ["usb", "1080p", "privacy shutter", "desk", "calls"],
+      "stock": 10
+    },
+    {
+      "productId": "CAM-300",
+      "name": "Agora Studio Camera",
+      "category": "camera",
+      "price": 299,
+      "currency": "USD",
+      "attributes": ["usb", "4k", "autofocus", "recording"],
+      "stock": 3
     }
   ]
 }

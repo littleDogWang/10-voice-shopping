@@ -1,10 +1,45 @@
-# Agora Conversational AI Next.js Quickstart
+# 09 Voice Shopping
 
 [![Build](https://github.com/AgoraIO-Conversational-AI/agent-quickstart-nextjs/actions/workflows/build-check.yml/badge.svg)](https://github.com/AgoraIO-Conversational-AI/agent-quickstart-nextjs/actions/workflows/build-check.yml)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](./LICENSE)
 [![Node](https://img.shields.io/badge/node-%3E%3D22-brightgreen)](https://nodejs.org/)
 
-Build a production-style voice agent in minutes with Next.js and the Agora Conversational AI Engine, including voice agent visualizer ([Agent UIKit](https://agoraio-conversational-ai.github.io/agent-uikit/)), live transcript, and real-time pipeline latency via `AGENT_METRICS` ([Agent Toolkit](https://github.com/AgoraIO-Conversational-AI/agent-client-toolkit-ts)).
+Compare electronics, review a server-priced basket and confirm a saved unpaid simulated order. Query or cancel orders from the same browser session. Built on the Agora Next.js voice quickstart, with real RTC/RTM and vendored [shczhen/agent-ui](https://github.com/shczhen/agent-ui) components.
+
+## Shopping setup and boundaries
+
+1. Install with `pnpm install`, configure the Agora credentials below, then run `pnpm run dev`.
+2. Open the app and choose **Browse Products** or **Start Voice Shopping**. Browsing, basket editing and saved orders work without starting a voice call.
+3. For voice tools, set `TOP_TEN_SCENARIO_TOOL_BASE_URL` in `.env.local` to this app's public HTTPS origin (no trailing API path). Agora cloud must reach it; localhost alone is not reachable from Agora. Without tool configuration, voice compares the local catalog and collects purchase intent without changing the basket or orders.
+4. Confirm the full basket summary to save an **Unpaid** order. Look it up in **Saved orders**, refresh, or explicitly confirm cancellation.
+
+All products/prices are fictional and stock is simulated. There is no payment, shipping, fulfillment or refund. Local simulated orders are stored in `.scenario-data/shopping.json` and the browser retains its session in localStorage. Use one Node process with persistent writable disk; default serverless/ephemeral storage does not guarantee persistence. Session identifiers are bearer capabilities, not authenticated customer accounts. Do not share them.
+
+Optional local verification variables: `SHOPPING_DATA_FILE` isolates the ledger; `NEXT_DIST_DIR` isolates build output when another development instance exists. The default build output remains `.next`.
+
+### Shopping HTTP routes
+
+All paths below begin `/api/scenarios/09-voice-shopping`. JSON errors use `{ "error": "code" }` and 400 (invalid input), 404 (missing object), 409 (stale quote/stock), or 500 (storage failure).
+
+| Method and path | Input / result |
+| --- | --- |
+| `GET /products` | Optional `q`, `category`, `max_price`; fixed products with available simulated stock |
+| `GET /inventory?product_id=MIC-100` | Exact price, available simulated stock and `simulated: true` |
+| `POST /sessions` | Create a random session; returns cart, orders and session_id |
+| `GET /sessions/{sessionId}` | Current basket quote and saved orders |
+| `POST /sessions/{sessionId}/cart` | `{ "product_id": "MIC-100", "quantity": 2 }`; set total quantity, zero removes; returns a new server quote |
+| `POST /sessions/{sessionId}/orders` | `{ "quote_id": "latest-quote", "confirmed": true }`; save an unpaid order once |
+| `GET /sessions/{sessionId}/orders` | List this session's orders |
+| `GET /sessions/{sessionId}/orders/{orderId}` | Query one order |
+| `POST /sessions/{sessionId}/orders/{orderId}` | `{ "confirmed": true }`; cancel that unpaid order idempotently |
+
+`POST /api/invite-agent` additionally requires `shopping_session_id`, alongside `requester_id` and `channel_name`. Its seven catalog/basket/order tools are bound to this shopper. Do not send another shopper's session. `set_cart_item` sets total quantity; `confirm_order` and `cancel_order` require explicit conversational consent. Actual speech/tool behavior still requires live acceptance.
+
+Run `pnpm run verify:shopping`, `pnpm run verify:scenario` and `pnpm run verify`. Shopping tests use isolated temporary files and never contact Agora. See [scenario design](scenarios/09-voice-shopping/design.md), [acceptance](scenarios/09-voice-shopping/acceptance.md) and [UI source provenance](styles/agent-ui/PROVENANCE.md).
+
+## Inherited quickstart setup
+
+The following sections document the Agora transport baseline. When instructions mention the generic entry card, use this scenario's **Start Voice Shopping** action and the shopping setup above. Cloning the upstream starter gives the base app, not this scenario's commerce implementation.
 
 ## Prerequisites
 
@@ -198,3 +233,10 @@ Please do **not** open public issues for security reports. Email security@agora.
 ## License
 
 Released under the [MIT License](./LICENSE).
+
+
+## Local conversation and optional tools
+
+Default conversations append catalog.json products, attributes, USD prices and fixed fictional stock to the prompt. The assistant can compare products and summarize purchase intent and estimated totals; it cannot update the browser basket, create server quotes, save/cancel orders or reserve stock. Browser business APIs remain available independently. A public HTTPS tool origin enables the existing seven session-bound tools; tool-mode facts and outcomes require successful responses, with no fixture fallback.
+
+TOP_TEN_SCENARIO_TOOL_BASE_URL is optional. Only an explicitly configured public HTTPS endpoint enables tools; malformed, HTTP, localhost and local/private origins leave tools disabled. URL validation does not prove network reachability. No tunnel, knowledge base or database is needed for the default conversation. Local checks do not establish live speech or cloud callback acceptance.

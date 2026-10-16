@@ -21,8 +21,6 @@ import {
   type UserTranscription,
   type AgentTranscription,
 } from 'agora-agent-client-toolkit';
-import { AgentVisualizer } from 'agora-agent-uikit';
-import { MicButtonWithVisualizer } from 'agora-agent-uikit/rtc';
 import { DEFAULT_AGENT_UID } from '@/lib/agora';
 import {
   getCurrentInProgressMessage,
@@ -37,12 +35,13 @@ import {
   type ConnectionIssue,
 } from './ConversationErrorCard';
 import { ConnectionStatusPanel } from './ConnectionStatusPanel';
-import { QuickstartConversationLayout } from './QuickstartConversationLayout';
 import {
   QuickstartPipelineMetrics,
   type QuickstartAgentMetric,
 } from './QuickstartPipelineMetrics';
-import { QuickstartTranscriptPanel } from './QuickstartTranscriptPanel';
+import { ConversationPanel } from './agent-ui/conversation-panel';
+import { VoiceDock } from './agent-ui/voice-dock';
+import type { VoiceState } from './status';
 import type { ConversationComponentProps } from '@/types/conversation';
 
 // Cap the displayed issues list to avoid overwhelming the UI during a cascade of errors.
@@ -433,20 +432,24 @@ export default function ConversationComponent({
    * If we also unpublish in the toggle, usePublish and the button fight each other
    * and break the MicButtonWithVisualizer Web Audio graph.
    */
+  const [conversationOpen, setConversationOpen] = useState(true);
+  const [micPending, setMicPending] = useState(false);
   const handleMicToggle = useCallback(async () => {
+    if (micPending) return;
     const next = !isEnabled;
     const track = localMicrophoneTrack;
     if (!track) {
       setIsEnabled(next);
       return;
     }
+    setMicPending(true);
     try {
       await track.setEnabled(next);
       setIsEnabled(next);
     } catch (error) {
       console.error('Failed to toggle microphone:', error);
-    }
-  }, [isEnabled, localMicrophoneTrack]);
+    } finally { setMicPending(false); }
+  }, [isEnabled, localMicrophoneTrack, micPending]);
 
   const handleTokenWillExpire = useCallback(async () => {
     if (!onTokenWillExpire || !joinedUID) return;
@@ -468,61 +471,22 @@ export default function ConversationComponent({
     onEndConversation();
   }, [onEndConversation]);
 
-  return (
-    <QuickstartConversationLayout
-      statusPanel={
-        <ConnectionStatusPanel
-          connectionState={connectionState}
-          connectionSeverity={connectionSeverity}
-          connectionIssues={connectionIssues}
-          isOpen={isConnectionDetailsOpen}
-          onToggle={() => setIsConnectionDetailsOpen((open) => !open)}
-        />
-      }
-      pipelineMetrics={<QuickstartPipelineMetrics metrics={agentMetrics} />}
-      transcriptPanel={
-        <QuickstartTranscriptPanel
-          messageList={messageList}
-          currentInProgressMessage={currentInProgressMessage}
-          agentUID={agentUID}
-        />
-      }
-      visualizer={
-        <div
-          className="relative flex h-full min-h-[20rem] w-full max-w-4xl items-center justify-center"
-          role="region"
-          aria-label="AI agent status visualization"
-        >
-          <AgentVisualizer state={visualizerState} size="lg" />
-          {remoteUsers.map((user) => (
-            <div key={user.uid} className="hidden">
-              <RemoteUser user={user} />
-            </div>
-          ))}
-        </div>
-      }
-      controls={
-        <div
-          className="mx-auto flex w-fit items-center gap-3 rounded-full border border-border bg-card/80 px-4 py-2 backdrop-blur-md"
-          role="group"
-          aria-label="Audio controls"
-        >
-          <div className="conversation-mic-host flex items-center justify-center">
-            <MicButtonWithVisualizer
-              isEnabled={isEnabled}
-              setIsEnabled={setIsEnabled}
-              track={localMicrophoneTrack}
-              onToggle={handleMicToggle}
-              className="overflow-visible"
-              aria-label={isEnabled ? 'Mute microphone' : 'Unmute microphone'}
-              enabledColor="hsl(var(--primary))"
-              disabledColor="hsl(var(--destructive))"
-            />
-          </div>
-          <MicrophoneSelector localMicrophoneTrack={localMicrophoneTrack} />
-        </div>
-      }
-      onEndConversation={handleEndConversation}
-    />
-  );
+  const voiceState: VoiceState = connectionSeverity === 'error' ? 'error'
+    : !isAgentConnected ? 'connecting' : !isEnabled ? 'muted'
+    : visualizerState === 'talking' ? 'speaking' : visualizerState === 'analyzing' ? 'thinking' : 'listening';
+  const turns = currentInProgressMessage ? [...messageList, currentInProgressMessage] : messageList;
+  return <div className="shopping-voice-session">
+    <ConnectionStatusPanel connectionState={connectionState} connectionSeverity={connectionSeverity} connectionIssues={connectionIssues} isOpen={isConnectionDetailsOpen} onToggle={() => setIsConnectionDetailsOpen(open => !open)} />
+    <QuickstartPipelineMetrics metrics={agentMetrics} />
+    <ConversationPanel voiceState={voiceState} hidden={!conversationOpen} messages={turns.map((message, index) => ({
+      id: `${message.turn_id ?? message.uid}-${index}`, role: String(message.uid) === agentUID ? 'agent' : 'user',
+      text: message.text?.trim() || '…', createdAt: message.createdAt,
+      streaming: message === currentInProgressMessage,
+    }))} />
+    <VoiceDock state={voiceState} micEnabled={isEnabled} disabled={!localMicrophoneTrack} micPending={micPending}
+      conversationOpen={conversationOpen} conversationId="shopping-transcript" onToggleVoice={handleMicToggle}
+      onEnd={handleEndConversation} onToggleConversation={() => setConversationOpen(open => !open)}
+      devices={<MicrophoneSelector localMicrophoneTrack={localMicrophoneTrack} />} />
+    {remoteUsers.map(user => <div key={user.uid} className="hidden"><RemoteUser user={user} /></div>)}
+  </div>;
 }

@@ -12,13 +12,15 @@ export interface Product {
 
 const products = catalogData.products as Product[];
 
-export function searchProducts(query: string): Product[] {
+export function searchProducts(query: string, category?: string, maxPrice?: number): Product[] {
   const tokens = query.toLowerCase().split(/[^a-z0-9]+/).filter(Boolean);
   return products.filter((product) => {
     const searchable = [product.name, product.category, ...product.attributes]
       .join(' ')
       .toLowerCase();
-    return tokens.length === 0 || tokens.some((token) => searchable.includes(token));
+    return (!category || product.category === category)
+      && (maxPrice === undefined || product.price <= maxPrice)
+      && (tokens.length === 0 || tokens.every((token) => searchable.includes(token)));
   });
 }
 

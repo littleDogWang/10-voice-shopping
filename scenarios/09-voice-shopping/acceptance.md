@@ -1,23 +1,34 @@
-# 语音商品导购验收标准
+# Voice Shopping Acceptance
 
-## 必须通过
+## Automated behavior
 
-- Agent 能根据用途、预算和属性筛选商品。
-- 推荐理由引用商品目录字段，不凭空生成规格。
-- 价格和库存来自查询结果，查询失败时明确标记未知。
-- Agent 不声称已经下单或扣款。
-- 多轮修改预算/偏好后，推荐结果能更新。
+Run `pnpm run verify:shopping` and `pnpm run verify:api`.
 
-## 推荐用例
+- Category/attribute/budget filtering returns exact catalog values; zero-stock products remain visible.
+- Reject malformed JSON, invalid quantities, missing products, unavailable stock and unknown sessions.
+- Ignore caller-provided prices and totals; calculate every line and total on the server.
+- Editing a cart invalidates old quotes; reject missing or non-boolean confirmation.
+- Confirmed orders have numbers, status unpaid, exact items and totals, and a cleared cart.
+- Retried confirmation does not create another order or reactivate a cancelled order.
+- A second shopper cannot query, confirm or cancel the first shopper's order using their own session.
+- Concurrent confirmations cannot oversell simulated stock. Failed confirmation preserves the basket.
+- Cancellation requires confirmation, is idempotent and releases stock.
+- Orders remain readable from a fresh Node process using the saved ledger.
+- All private/mutation tools bind the current shopping session, and startup rejects an unavailable tool configuration before contacting Agora.
 
-1. 按预算和用途推荐。
-2. 修改预算后重新推荐。
-3. 商品存在但缺货。
-4. 商品目录没有该规格。
-5. 用户要求直接购买。
+## Browser acceptance
 
-## 证据
+Inspect actual desktop and mobile rendering and capture/view screenshots of:
 
-- 商品 fixture 和查询返回。
-- 推荐字段与目录字段对照。
-- 购买边界话术和 transcript。
+- Scenario-specific initial Dialog and persistent scenario identity.
+- Product comparison, budget/preference filters and no-match state.
+- Empty/populated basket, quantity changes, removal and changed-model selection.
+- Confirmation summary, Keep Editing, saved unpaid order and refresh/reload persistence.
+- Cancellation confirmation and cancelled result.
+- Inventory or network failure with no false success.
+
+Use the real local HTTP routes and components. Simulated commerce data must not be described as a real purchase. Mobile browser emulation is not real-device acceptance.
+
+## Live voice acceptance
+
+Requires Agora credentials and a cloud-reachable HTTPS tool origin. Speak through selection, model/quantity changes, explicit confirmation, order lookup and cancellation. Verify actual tool calls, page synchronization, transcript roles, microphone controls and stop/restart behavior. An unclear reply or changed basket must trigger a fresh summary/confirmation. Never claim that route tests or mocked speech validate this behavior.

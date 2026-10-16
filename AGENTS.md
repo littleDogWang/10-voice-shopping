@@ -2,6 +2,30 @@
 
 This guide is for coding agents making changes in `agent-quickstart-nextjs`.
 
+## Shared scenario UI requirements
+
+These three requirements apply to every scenario and are mandatory for UI implementation and acceptance:
+
+1. **Use a scenario-specific initial Dialog**: its title, description, primary action, loading/error messages and accessibility labels must explain the current scenario. Use a task-specific action instead of a generic Start Conversation entry.
+2. **Keep the scenario identity visible**: after closing the initial Dialog, the scenario name, identifier and short purpose must remain visible in the desktop and mobile interface. Activity status must not replace the scenario name.
+3. **Use our UIkit components**: adopt actual component source and the accompanying theme/styles from [shczhen/agent-ui](https://github.com/shczhen/agent-ui), connected to real session data and actions. A visual imitation or continued use of the previous UIkit alone does not satisfy this requirement.
+
+Inspect the rendered initial Dialog and main interface, and verify actual UIkit component usage. Each scenario plan specifies its own copy, identity and component mapping.
+
+The shared specification lives at `scenario-repos/SCENARIO_UI_RULES.md` in the workspace (`../SCENARIO_UI_RULES.md` relative to this file). This section contains all three minimum requirements and remains usable when the repository is cloned independently. Synchronize this section across repositories when shared rules change. Identify the 00 base scenario as a basic voice demo.
+
+## Repository language
+
+Use English for repository content, including documentation, code comments, UI copy and examples. Keep future additions and edits free of Chinese text.
+
+## Scenario 09 workflow
+
+This repository is Voice Shopping: fixed fictional electronics, server-priced basket quotes and saved unpaid simulated orders. Use `scenarios/09-voice-shopping/shopping.ts` for storage/business rules and `shopping-types.ts` for response contracts. Shopping APIs live under `app/api/scenarios/09-voice-shopping/`; `hooks/use-shopping.ts` and `ShoppingWorkbench` own browser state and display. `LandingPage` passes the shopping session into invite; tools bind it server-side.
+
+Run `pnpm run verify:shopping` alongside the base checks. Tests must use an isolated `SHOPPING_DATA_FILE`. Never confirm an edited quote, invent tool success, accept caller prices, expose other sessions or describe simulated orders as real purchases. Preserve explicit confirmation and idempotency. The local ledger supports one Node process with persistent disk; do not claim distributed/serverless persistence. `TOP_TEN_SCENARIO_TOOL_BASE_URL` must be a cloud-reachable origin for voice tools.
+
+Use vendored agent-ui Dialog, ConversationPanel and VoiceDock with real callbacks and transcript/status; see `styles/agent-ui/PROVENANCE.md`. Default build output is `.next`; `NEXT_DIST_DIR` can isolate local build output. Live speech/tool acceptance is separate from API checks and browser acceptance.
+
 ## How to Load
 
 This repository uses progressive disclosure documentation. Docs live under `docs/ai/` in three levels.
@@ -28,7 +52,7 @@ The sections below (Start Here, Patterns, Anti-Patterns, etc.) remain the canoni
 - Client RTC: `agora-rtc-react` hooks over `agora-rtc-sdk-ng`
 - Messaging: `agora-rtm` for transcripts, agent state, metrics, and error events
 - Toolkit core: `agora-agent-client-toolkit` for `AgoraVoiceAI`, transcript helpers, and turn status
-- UI components: `agora-agent-uikit` for visualizer, transcript, and mic controls
+- UI components: vendored `shczhen/agent-ui` Dialog, ConversationPanel and VoiceDock for scenario entry, real transcripts and voice controls. The inherited agora-agent-uikit package remains only for baseline/type compatibility.
 - Server SDK: `agora-agents` for managed agent session startup
 - API routes: token generation, agent invite, chat, and stop routes live in `app/api`
 - Default agent config: Agora-managed STT, LLM, and TTS; `.env.local` contains only Agora project credentials
@@ -62,9 +86,9 @@ The sections below (Start Here, Patterns, Anti-Patterns, etc.) remain the canoni
 - `app/api/chat/completions/route.ts`: optional OpenAI-compatible SSE proxy for a custom LLM (not wired by default).
 - `components/LandingPage.tsx`: session bootstrap, RTM setup, provider wiring, and conversation lifecycle.
 - `components/ConversationComponent.tsx`: RTC join, mic publication, `AgoraVoiceAI` init, transcript state, and renewals.
-- `components/QuickstartConversationLayout.tsx`: in-call header, transcript rail, and controls dock.
+- `components/ShoppingWorkbench.tsx`: catalog, comparison, basket confirmation and saved orders.
 - `components/QuickstartPipelineMetrics.tsx`: per-stage latency chips from `AGENT_METRICS`.
-- `components/QuickstartTranscriptPanel.tsx`: live transcript rail.
+- `components/agent-ui/conversation-panel.tsx`: live shopping transcript.
 - `lib/agora.ts`: shared agent UID defaults.
 - `lib/conversation.ts`: transcript normalization and visualizer state mapping.
 - `env.local.example`: local environment template.
@@ -115,7 +139,7 @@ useEffect(() => {
 ### Transcript and UI Mapping
 
 - Manage `transcript` and `agentState` through `useState` plus `ai.on(TRANSCRIPT_UPDATED, ...)` and `ai.on(AGENT_STATE_CHANGED, ...)`.
-- The toolkit uses `uid="0"` as a sentinel for the local user's speech. Remap that value to `client.uid` before passing messages into `QuickstartTranscriptPanel`, or user speech renders on the agent side.
+- The toolkit uses `uid="0"` as a sentinel for the local user's speech. Remap that value to `client.uid` before passing messages into `ConversationPanel`, or user speech renders on the agent side.
 - Include `INTERRUPTED` turns in `messageList`; filter only `IN_PROGRESS`. If the agent's first turn is interrupted and omitted, `messageList` stays empty and the transcript panel never shows that first turn.
 
 ### Tokens and Styling
@@ -219,3 +243,10 @@ Before finishing a change:
 | fix docs        | Close findings from a docs review or test run                |
 
 The generator and tester live in the [AgoraIO-Community/ai-devkit](https://github.com/AgoraIO-Community/ai-devkit) skill set. See the [progressive disclosure standard](https://github.com/AgoraIO-Community/ai-devkit/blob/main/docs/progressive-disclosure-standard.md) for the full specification.
+
+
+## Local conversation and optional tools
+
+Default conversations append catalog.json products, attributes, USD prices and fixed fictional stock to the prompt. The assistant can compare products and summarize purchase intent and estimated totals; it cannot update the browser basket, create server quotes, save/cancel orders or reserve stock. Browser business APIs remain available independently. A public HTTPS tool origin enables the existing seven session-bound tools; tool-mode facts and outcomes require successful responses, with no fixture fallback.
+
+TOP_TEN_SCENARIO_TOOL_BASE_URL is optional. Only an explicitly configured public HTTPS endpoint enables tools; malformed, HTTP, localhost and local/private origins leave tools disabled. URL validation does not prove network reachability. No tunnel, knowledge base or database is needed for the default conversation. Local checks do not establish live speech or cloud callback acceptance.

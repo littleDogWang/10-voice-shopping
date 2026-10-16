@@ -1,5 +1,10 @@
 # 01 Setup
 
+
+## Scenario 09 current behavior
+
+Shopping setup: set TOP_TEN_SCENARIO_TOOL_BASE_URL to the public HTTPS app origin for cloud tool calls. The local catalog/basket work without a voice call. Run pnpm run verify:shopping. SHOPPING_DATA_FILE optionally isolates local data; NEXT_DIST_DIR optionally isolates local build output. Use one Node process and persistent writable disk for the ledger.
+
 > Environment setup, commands, and safe verification flow for this quickstart.
 
 ## Runtime Requirements
@@ -61,7 +66,7 @@ Requires env/project binding:
 ## Local Run Notes
 
 - App + API routes run at `http://localhost:3000`.
-- Session starts from `QuickstartPreCallCard` (`Try it now`) and bootstraps token + RTM + invite flow.
+- Session starts from `QuickstartPreCallCard` (`Start Voice Shopping`) and bootstraps token + RTM + invite flow.
 - If transcript or agent join fails, first run `agora project doctor --deep`.
 
 ## CI Expectations

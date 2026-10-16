@@ -1,5 +1,10 @@
 # 03 Code Map
 
+
+## Scenario 09 current behavior
+
+Scenario business logic: scenarios/09-voice-shopping/{catalog,shopping,shopping-types,http}.ts. Browser state: hooks/use-shopping.ts. UI: ShoppingWorkbench, agent-ui/ConversationPanel and VoiceDock, ui/Dialog. APIs: app/api/scenarios/09-voice-shopping/sessions and nested cart/orders routes. Regression checks: scripts/verify-shopping.ts. UI provenance: styles/agent-ui/PROVENANCE.md.
+
 > Directory-level ownership map and where to change behavior safely.
 
 ## Top-Level Layout
@@ -26,8 +31,8 @@ types/               Shared TypeScript route/component contracts
 
 - `LandingPage.tsx`: pre-call shell, token/invite/RTM bootstrap, conversation mount/unmount.
 - `ConversationComponent.tsx`: RTC join, mic publish, toolkit init, transcript/metrics/issues state.
-- `QuickstartConversationLayout.tsx`: in-call framing and slots.
-- `QuickstartTranscriptPanel.tsx`: live transcript panel.
+- `ShoppingWorkbench.tsx`: catalog, comparison, basket review and saved-order presentation.
+- `agent-ui/conversation-panel.tsx`: real shopping transcript.
 - `QuickstartPipelineMetrics.tsx`: latency chips from metrics stream.
 - `ConnectionStatusPanel.tsx` + `ConversationErrorCard.tsx`: issue rendering/severity.
 
@@ -52,7 +57,7 @@ types/               Shared TypeScript route/component contracts
 ## Additional Component Roles
 
 - `QuickstartPreCallCard.tsx`: start CTA and pre-call messaging.
-- `QuickstartConversationLayout.tsx`: shared in-call composition shell.
+- `agent-ui/voice-dock.tsx`: real voice controls.
 - `MicrophoneSelector.tsx`: input-device selection UI.
 - `ConnectionStatusPanel.tsx`: summary + detailed connection issue panel.
 - `ErrorBoundary.tsx`: runtime guardrail for conversation subtree.

@@ -1,5 +1,10 @@
 # 02 Architecture
 
+
+## Scenario 09 current behavior
+
+Shopping data flow: ShoppingWorkbench -> useShopping -> session/cart/order HTTP routes -> shopping.ts -> local atomic JSON ledger. The browser retains its session id; invite binds the same session into seven agent tools. Voice-time polling reads actual cart/order updates. Prices are server-derived, quotes invalidate on cart changes, unpaid orders reserve simulated stock and cancellation releases it. Writes serialize within one Node process; distributed storage/fulfillment is not implemented.
+
 > Runtime architecture for browser RTC/RTM, Next.js route handlers, and Agora managed agent session.
 
 ## High-Level Shape
@@ -41,7 +46,7 @@ Agora Cloud
 1. UI calls `/api/stop-conversation` with `agent_id` if present.
 2. UI logs out RTM client.
 3. RTC hook ownership handles leave/unpublish cleanup.
-4. Component state resets to pre-call shell.
+4. Voice state resets; the catalog, shopping session, basket and saved orders remain available.
 
 ## Core State Domains
 

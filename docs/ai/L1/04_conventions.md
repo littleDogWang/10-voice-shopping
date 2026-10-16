@@ -1,5 +1,10 @@
 # 04 Conventions
 
+
+## Scenario 09 current behavior
+
+Scenario invariants: prices/totals come from the catalog, confirmation uses the latest server quote, a retried confirmation never duplicates or reactivates an order, cancellation is explicit and idempotent, and session-scoped tools never accept a shopper id from the model. Preserve real RTC/RTM hooks and transcript role remapping. Keep repository prose English.
+
 > Implementation conventions that protect lifecycle correctness, transcript accuracy, and docs/code alignment.
 
 ## React and RTC Lifecycle
