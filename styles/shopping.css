@@ -118,3 +118,8 @@ input:focus-visible, select:focus-visible { outline: 2px solid var(--ring); outl
   .shopping-entry [data-slot="dialog-title"] { font-size: 23px; }
 }
 @media (prefers-reduced-motion: reduce) { *, *::before, *::after { animation-duration: .01ms !important; transition-duration: .01ms !important; } }
+
+.shopping-embedded { max-width: none; padding: 0; }
+.shopping-embedded .shopping-layout { display: block; padding: 0; }
+.shopping-embedded .shopping-content { min-width: 0; }
+.shopping-embedded input, .shopping-embedded select { background: var(--input-surface); color: var(--foreground); border-color: var(--border); }

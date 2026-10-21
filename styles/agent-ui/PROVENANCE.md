@@ -1,10 +1,9 @@
-# Agent UI Source Provenance
+# Agent UI source provenance
 
-Source: https://github.com/shczhen/agent-ui, `systems/agora-glass/react`.
-Archive revision retained from the locally inspected 01 scenario: `29d3aa3ed9e1a4d2cd5fcc1747689e3bc2915e2d`.
+Source: https://github.com/shczhen/agent-ui, Agora Glass system.
 
-Reused source: Dialog, Button, Bubble, Message, Tooltip, Status, VoiceDock, ConversationPanel, control-light, tokens and Crystal/Obsidian theme. Copied from the existing vendored source in scenario 01 on 2026-10-16; no fresh upstream revision verification is claimed.
+Copied from the actual vendored components and theme in scenario 01 on 2026-10-21. Scenario 01 records its original adoption at revision `29d3aa3ed9e1a4d2cd5fcc1747689e3bc2915e2d`; no fresh upstream revision or license audit is claimed.
 
-Adaptations: shopping copy and real voice state/callbacks; ConversationPanel uses a native scrolling transcript with real toolkit messages instead of a sample conversation or an additional scrolling package. VoiceDock uses a normal themed surface. Only the component recipes used here are retained, with Tailwind 4 directives removed for this repository's Tailwind 3 pipeline. Semantic colors use full CSS color values. No sample devices, generated replies or simulated voice sessions are included.
+Reused source includes Dialog, Tabs, Button, Alert, Message, Bubble, Tooltip, Empty, Status, VoiceDock, GlassSurface, ConversationPanel, control-light, theme tokens and recipes. The application-owned AgentSignal canvas uses semantic state and measured track amplitude.
 
-MiSans fonts and their existing attribution are retained in `public/fonts/`. The inspected local provenance did not establish an upstream component collection redistribution license; this record makes no additional license claim.
+Adaptations: scenario-specific content and start actions; real session callbacks, microphone/device selection, live transcript and Inspector. The Tailwind 4/PostCSS configuration and MiSans font assets match scenario 01. Existing repository licenses and font notices remain in place.

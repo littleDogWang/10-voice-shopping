@@ -1,16 +1,17 @@
-"use client";
+'use client';
 
-import type { ReactNode } from "react";
-import { MessageSquareText, Mic, MicOff, PhoneOff } from "lucide-react";
-import { Button } from "@/components/ui/button";
+import type { ReactNode } from 'react';
+import { MessageSquareText, Mic, MicOff, PhoneOff } from 'lucide-react';
+import { Button } from '@/components/ui/button';
 import {
   Tooltip,
   TooltipContent,
   TooltipTrigger,
-} from "@/components/ui/tooltip";
-import { Status, type VoiceState } from "@/components/status";
+} from '@/components/ui/tooltip';
+import { GlassSurface } from '@/components/glass-surface';
+import { Status, type VoiceState } from '@/components/status';
 
-import { cn } from "@/lib/utils";
+import { cn } from '@/lib/utils';
 
 export interface VoiceDockProps {
   state: VoiceState;
@@ -41,16 +42,23 @@ export function VoiceDock({
   className,
 }: VoiceDockProps) {
   return (
-    <div
-      className={cn("ag-voice-dock", className)}
+    <GlassSurface
+      className={cn('ag-voice-dock', className)}
       data-voice-state={state}
       role="group"
-      aria-label="Shopping voice controls"
+      aria-label="Voice session controls"
+      material="liquid"
     >
       {devices}
       <div className="ag-dock-copy" role="status">
         <Status state={state} />
-        <span className="ag-caption">{ending ? "Ending shopping conversation…" : micEnabled ? "Your microphone is on" : "Your microphone is off"}</span>
+        <span className="ag-caption">
+          {ending
+            ? 'Ending session…'
+            : micEnabled
+              ? 'Your microphone is on'
+              : 'Your microphone is off'}
+        </span>
       </div>
       <div className="ag-action-row">
         <Tooltip>
@@ -59,7 +67,7 @@ export function VoiceDock({
               size="icon"
               variant="ghost"
               aria-label={
-                conversationOpen ? "Hide conversation" : "Show conversation"
+                conversationOpen ? 'Hide conversation' : 'Show conversation'
               }
               aria-expanded={conversationOpen}
               aria-controls={conversationId}
@@ -76,23 +84,21 @@ export function VoiceDock({
             <Button
               size="icon"
               variant="ghost"
-              disabled={ending || state === "ended"}
-              aria-label="End voice shopping"
+              disabled={ending || state === 'ended'}
+              aria-label="End voice session"
               onClick={onEnd}
             >
               <PhoneOff data-icon="inline-start" />
             </Button>
           </TooltipTrigger>
-          <TooltipContent>End shopping conversation</TooltipContent>
+          <TooltipContent>End session</TooltipContent>
         </Tooltip>
         <Tooltip>
           <TooltipTrigger asChild>
             <Button
               size="icon"
-              aria-label={
-                micEnabled ? "Mute microphone" : "Unmute microphone"
-              }
-              disabled={disabled || ending || micPending || state === "ended"}
+              aria-label={micEnabled ? 'Mute microphone' : 'Unmute microphone'}
+              disabled={disabled || ending || micPending || state === 'ended'}
               aria-pressed={micEnabled}
               onClick={onToggleVoice}
             >
@@ -104,10 +110,10 @@ export function VoiceDock({
             </Button>
           </TooltipTrigger>
           <TooltipContent>
-            {micEnabled ? "Mute microphone" : "Unmute microphone"}
+            {micEnabled ? 'Mute microphone' : 'Unmute microphone'}
           </TooltipContent>
         </Tooltip>
       </div>
-    </div>
+    </GlassSurface>
   );
 }

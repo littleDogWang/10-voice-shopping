@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useCallback, useMemo } from 'react';
+import { useState, useEffect, useCallback, useMemo, useRef } from 'react';
 import AgoraRTC, {
   useRTCClient,
   useLocalMicrophoneTrack,
@@ -21,11 +21,12 @@ import {
   type UserTranscription,
   type AgentTranscription,
 } from 'agora-agent-client-toolkit';
+import { VoiceDock } from './agent-ui/voice-dock';
+import type { VoiceState } from './status';
 import { DEFAULT_AGENT_UID } from '@/lib/agora';
 import {
   getCurrentInProgressMessage,
   getMessageList,
-  mapAgentVisualizerState,
   normalizeTimestampMs,
   normalizeTranscript,
 } from '@/lib/conversation';
@@ -35,13 +36,19 @@ import {
   type ConnectionIssue,
 } from './ConversationErrorCard';
 import { ConnectionStatusPanel } from './ConnectionStatusPanel';
+import { QuickstartConversationLayout } from './QuickstartConversationLayout';
+import { mapSignalState } from '@/lib/agent-signal';
 import {
-  QuickstartPipelineMetrics,
-  type QuickstartAgentMetric,
-} from './QuickstartPipelineMetrics';
-import { ConversationPanel } from './agent-ui/conversation-panel';
-import { VoiceDock } from './agent-ui/voice-dock';
-import type { VoiceState } from './status';
+  appendInspectionEvent,
+  normalizeSdkTurn,
+  parseRawTurn,
+  upsertTurn,
+  validModuleMetric,
+  type InspectionEvent,
+  type ModuleMetric,
+  type TurnMeasurement,
+} from '@/lib/inspection';
+import { QuickstartTranscriptPanel } from './QuickstartTranscriptPanel';
 import type { ConversationComponentProps } from '@/types/conversation';
 
 // Cap the displayed issues list to avoid overwhelming the UI during a cascade of errors.
@@ -94,10 +101,17 @@ export default function ConversationComponent({
   rtmClient,
   onTokenWillExpire,
   onEndConversation,
+  ending = false,
+  startupError,
+  feedback,
+  onActivityChange,
+  onInspectionChange,
 }: ConversationComponentProps) {
   const client = useRTCClient();
   const remoteUsers = useRemoteUsers();
   const [isEnabled, setIsEnabled] = useState(true);
+  const [conversationOpen, setConversationOpen] = useState(true);
+  const [micPending, setMicPending] = useState(false);
   const [isAgentConnected, setIsAgentConnected] = useState(false);
   const [isConnectionDetailsOpen, setIsConnectionDetailsOpen] = useState(false);
 
@@ -112,7 +126,43 @@ export default function ConversationComponent({
     TranscriptHelperItem<Partial<UserTranscription | AgentTranscription>>[]
   >([]);
   const [agentState, setAgentState] = useState<AgentState | null>(null);
-  const [agentMetrics, setAgentMetrics] = useState<QuickstartAgentMetric[]>([]);
+  const [agentMetrics, setAgentMetrics] = useState<ModuleMetric[]>([]);
+  const [turns, setTurns] = useState<TurnMeasurement[]>([]);
+  const [events, setEvents] = useState<InspectionEvent[]>([]);
+  const [interruptions, setInterruptions] = useState(0);
+  const seenInterruptions = useRef(new Set<string>());
+  const pushEvent = useCallback(
+    (
+      kind: InspectionEvent['kind'],
+      label: string,
+      detail?: string,
+      id?: string,
+    ) => {
+      const time = Date.now();
+      setEvents((previous) =>
+        appendInspectionEvent(previous, {
+          id: id ?? `${kind}-${time}-${label}`,
+          time,
+          kind,
+          label,
+          detail,
+        }),
+      );
+    },
+    [],
+  );
+  const recordTurn = useCallback(
+    (turn: TurnMeasurement) => {
+      setTurns((previous) => upsertTurn(previous, turn));
+      pushEvent(
+        'turn',
+        `Turn ${turn.turnId} finished`,
+        'Completed-turn metrics received.',
+        `turn-${turn.agentId}-${turn.turnId}`,
+      );
+    },
+    [pushEvent],
+  );
   const [connectionIssues, setConnectionIssues] = useState<ConnectionIssue[]>(
     [],
   );
@@ -129,6 +179,18 @@ export default function ConversationComponent({
       return [issue, ...prev].slice(0, MAX_CONNECTION_ISSUES);
     });
   }, []);
+
+  useEffect(() => {
+    if (!startupError) return;
+    addConnectionIssue({
+      id: 'agent-start-failed',
+      source: 'rtm-signaling',
+      agentUserId: agentUID,
+      code: 'AGENT_START_FAILED',
+      message: startupError,
+      timestamp: Date.now(),
+    });
+  }, [startupError, agentUID, addConnectionIssue]);
 
   // Auto-open details panel as soon as a new issue is recorded.
   useEffect(() => {
@@ -170,8 +232,21 @@ export default function ConversationComponent({
   // isReady uses the same setTimeout(fn,0) pattern as useJoin: StrictMode cleanup fires
   // synchronously before the timeout, so only the real second mount's timer fires.
   // Do NOT pass `isEnabled` — that ties track lifetime to mute state and breaks the Web Audio
-  // graph inside MicButtonWithVisualizer. Mute uses track.setEnabled() only.
-  const { localMicrophoneTrack } = useLocalMicrophoneTrack(isReady);
+  // track lifecycle. Mute uses track.setEnabled() only.
+  const { localMicrophoneTrack, error: microphoneError } =
+    useLocalMicrophoneTrack(isReady);
+  useEffect(() => {
+    if (!microphoneError) return;
+    addConnectionIssue({
+      id: `microphone-${Date.now()}`,
+      source: 'rtc',
+      agentUserId: agentUID,
+      code: 'MICROPHONE_UNAVAILABLE',
+      message:
+        'Microphone unavailable. Allow microphone access in your browser, then end this session and start again.',
+      timestamp: Date.now(),
+    });
+  }, [microphoneError, addConnectionIssue, agentUID]);
 
   // ENABLE_AUDIO_PTS is a module-level SDK parameter (not on the client instance).
   // It must be set before publishing audio for transcript timing to be accurate.
@@ -234,11 +309,33 @@ export default function ConversationComponent({
           setRawTranscript([...t]);
         });
         // Agent state drives the visualizer, independent of RTC audio presence.
-        ai.on(AgoraVoiceAIEvents.AGENT_STATE_CHANGED, (_, event) =>
-          setAgentState(event.state),
-        );
+        ai.on(AgoraVoiceAIEvents.AGENT_STATE_CHANGED, (_, event) => {
+          setAgentState(event.state);
+          pushEvent(
+            'state',
+            `Agent ${event.state}`,
+            event.reason,
+            `state-${event.turnID}-${event.state}-${event.timestamp}`,
+          );
+        });
         ai.on(AgoraVoiceAIEvents.AGENT_METRICS, (_, metrics) => {
-          setAgentMetrics((prev) => [...prev, metrics].slice(-8));
+          const metric = validModuleMetric(metrics);
+          if (metric) setAgentMetrics((prev) => [...prev, metric].slice(-200));
+        });
+        ai.on(AgoraVoiceAIEvents.AGENT_TURN_FINISHED, (_, turn) =>
+          recordTurn(normalizeSdkTurn(turn)),
+        );
+        ai.on(AgoraVoiceAIEvents.AGENT_INTERRUPTED, (agentUserId, event) => {
+          const id = `interrupt-${agentUserId}-${event.turnID}-${event.timestamp}`;
+          if (seenInterruptions.current.has(id)) return;
+          seenInterruptions.current.add(id);
+          setInterruptions((previous) => previous + 1);
+          pushEvent(
+            'interruption',
+            `Turn ${event.turnID} interrupted`,
+            undefined,
+            id,
+          );
         });
         ai.on(AgoraVoiceAIEvents.MESSAGE_ERROR, (agentUserId, error) => {
           addConnectionIssue({
@@ -285,6 +382,15 @@ export default function ConversationComponent({
       } catch (error) {
         if (!cancelled) {
           console.error('[AgoraVoiceAI] init failed:', error);
+          addConnectionIssue({
+            id: 'toolkit-initialization',
+            source: 'agent',
+            agentUserId: agentUID,
+            code: 'TOOLKIT_INIT_FAILED',
+            message:
+              'Could not initialize session events. End this session and try again.',
+            timestamp: Date.now(),
+          });
         }
       }
     })();
@@ -317,6 +423,12 @@ export default function ConversationComponent({
       try {
         parsed = JSON.parse(payloadText);
       } catch {
+        return;
+      }
+
+      const turn = parseRawTurn(parsed);
+      if (turn) {
+        recordTurn(turn);
         return;
       }
 
@@ -355,7 +467,7 @@ export default function ConversationComponent({
     return () => {
       rtmClient.removeEventListener('message', handleRtmMessage);
     };
-  }, [rtmClient, addConnectionIssue]);
+  }, [rtmClient, addConnectionIssue, recordTurn]);
 
   // The toolkit uses uid="0" for local user speech — remap to actual RTC UID
   // so the transcript panel renders user messages on the correct side.
@@ -395,6 +507,7 @@ export default function ConversationComponent({
 
   useClientEvent(client, 'connection-state-change', (curState) => {
     setConnectionState(curState);
+    pushEvent('transport', `RTC ${curState.toLowerCase()}`);
   });
 
   const connectionSeverity = useMemo<'normal' | 'warning' | 'error'>(() => {
@@ -421,35 +534,132 @@ export default function ConversationComponent({
       : 'warning';
   }, [connectionState, connectionIssues]);
 
-  const visualizerState = useMemo(
-    () =>
-      mapAgentVisualizerState(agentState, isAgentConnected, connectionState),
-    [agentState, isAgentConnected, connectionState],
+  const voiceState: VoiceState =
+    connectionSeverity === 'error'
+      ? 'error'
+      : microphoneError
+        ? 'error'
+        : !joinSuccess || !isAgentConnected
+          ? 'connecting'
+          : agentState === 'thinking'
+            ? 'thinking'
+            : agentState === 'speaking'
+              ? 'speaking'
+              : !isEnabled
+                ? 'muted'
+                : agentState === 'listening'
+                  ? 'listening'
+                  : 'ready';
+
+  const signalState = mapSignalState(
+    agentState,
+    isAgentConnected,
+    connectionState,
+    connectionSeverity === 'error' || !!microphoneError,
   );
+  const agentAudioTrack = remoteUsers.find(
+    (user) => String(user.uid) === agentUID,
+  )?.audioTrack;
+  useEffect(() => {
+    onActivityChange?.({
+      state: signalState,
+      micEnabled: isEnabled,
+      levelSource:
+        signalState === 'speaking'
+          ? agentAudioTrack
+          : signalState === 'listening' && isEnabled
+            ? localMicrophoneTrack
+            : null,
+    });
+  }, [
+    signalState,
+    isEnabled,
+    agentAudioTrack,
+    localMicrophoneTrack,
+    onActivityChange,
+  ]);
+
+  useEffect(() => {
+    const errorEvents: InspectionEvent[] = connectionIssues.map((issue) => ({
+      id: `issue-${issue.id}`,
+      time: issue.timestamp,
+      kind: 'error',
+      label: `${issue.source}: ${issue.code}`,
+      detail: issue.message,
+    }));
+    onInspectionChange?.({
+      lifecycle: 'live',
+      startedAt: agoraData.startedAt ?? null,
+      endedAt: null,
+      transport: connectionState,
+      agentState: signalState,
+      micEnabled: isEnabled,
+      metrics: agentMetrics,
+      turns,
+      events: [...events, ...errorEvents]
+        .sort((a, b) => a.time - b.time)
+        .slice(-100),
+      messages: (currentInProgressMessage
+        ? [...messageList, currentInProgressMessage]
+        : messageList
+      ).map((message) => ({
+        id: `${message.uid}-${message.turn_id ?? message.createdAt ?? 'current'}`,
+        role: String(message.uid) === agentUID ? 'agent' : 'user',
+        text: message.text?.trim() || '…',
+        createdAt: message.createdAt,
+        streaming: message === currentInProgressMessage,
+      })),
+      interruptions,
+    });
+  }, [
+    onInspectionChange,
+    agoraData.startedAt,
+    connectionState,
+    signalState,
+    isEnabled,
+    agentMetrics,
+    turns,
+    events,
+    connectionIssues,
+    messageList,
+    currentInProgressMessage,
+    agentUID,
+    interruptions,
+  ]);
 
   /**
    * Mute/unmute via track.setEnabled() only — usePublish owns publish state.
    * If we also unpublish in the toggle, usePublish and the button fight each other
-   * and break the MicButtonWithVisualizer Web Audio graph.
+   * and break microphone ownership.
    */
-  const [conversationOpen, setConversationOpen] = useState(true);
-  const [micPending, setMicPending] = useState(false);
   const handleMicToggle = useCallback(async () => {
-    if (micPending) return;
+    if (micPending || !localMicrophoneTrack) return;
+    setMicPending(true);
     const next = !isEnabled;
     const track = localMicrophoneTrack;
-    if (!track) {
-      setIsEnabled(next);
-      return;
-    }
-    setMicPending(true);
     try {
       await track.setEnabled(next);
       setIsEnabled(next);
     } catch (error) {
       console.error('Failed to toggle microphone:', error);
-    } finally { setMicPending(false); }
-  }, [isEnabled, localMicrophoneTrack, micPending]);
+      addConnectionIssue({
+        id: `mic-${Date.now()}`,
+        source: 'rtc',
+        agentUserId: agentUID,
+        code: 'MIC_TOGGLE_FAILED',
+        message: 'Could not change microphone state. Please try again.',
+        timestamp: Date.now(),
+      });
+    } finally {
+      setMicPending(false);
+    }
+  }, [
+    isEnabled,
+    localMicrophoneTrack,
+    micPending,
+    addConnectionIssue,
+    agentUID,
+  ]);
 
   const handleTokenWillExpire = useCallback(async () => {
     if (!onTokenWillExpire || !joinedUID) return;
@@ -468,25 +678,64 @@ export default function ConversationComponent({
   useClientEvent(client, 'token-privilege-will-expire', handleTokenWillExpire);
 
   const handleEndConversation = useCallback(async () => {
-    onEndConversation();
+    await onEndConversation();
   }, [onEndConversation]);
 
-  const voiceState: VoiceState = connectionSeverity === 'error' ? 'error'
-    : !isAgentConnected ? 'connecting' : !isEnabled ? 'muted'
-    : visualizerState === 'talking' ? 'speaking' : visualizerState === 'analyzing' ? 'thinking' : 'listening';
-  const turns = currentInProgressMessage ? [...messageList, currentInProgressMessage] : messageList;
-  return <div className="shopping-voice-session">
-    <ConnectionStatusPanel connectionState={connectionState} connectionSeverity={connectionSeverity} connectionIssues={connectionIssues} isOpen={isConnectionDetailsOpen} onToggle={() => setIsConnectionDetailsOpen(open => !open)} />
-    <QuickstartPipelineMetrics metrics={agentMetrics} />
-    <ConversationPanel voiceState={voiceState} hidden={!conversationOpen} messages={turns.map((message, index) => ({
-      id: `${message.turn_id ?? message.uid}-${index}`, role: String(message.uid) === agentUID ? 'agent' : 'user',
-      text: message.text?.trim() || '…', createdAt: message.createdAt,
-      streaming: message === currentInProgressMessage,
-    }))} />
-    <VoiceDock state={voiceState} micEnabled={isEnabled} disabled={!localMicrophoneTrack} micPending={micPending}
-      conversationOpen={conversationOpen} conversationId="shopping-transcript" onToggleVoice={handleMicToggle}
-      onEnd={handleEndConversation} onToggleConversation={() => setConversationOpen(open => !open)}
-      devices={<MicrophoneSelector localMicrophoneTrack={localMicrophoneTrack} />} />
-    {remoteUsers.map(user => <div key={user.uid} className="hidden"><RemoteUser user={user} /></div>)}
-  </div>;
+  return (
+    <QuickstartConversationLayout
+      feedback={feedback}
+      statusPanel={
+        <ConnectionStatusPanel
+          connectionState={connectionState}
+          connectionSeverity={connectionSeverity}
+          connectionIssues={connectionIssues}
+          isOpen={isConnectionDetailsOpen}
+          onToggle={() => setIsConnectionDetailsOpen((open) => !open)}
+        />
+      }
+      transcriptPanel={
+        <>
+          <QuickstartTranscriptPanel
+            messageList={messageList}
+            currentInProgressMessage={currentInProgressMessage}
+            agentUID={agentUID}
+            state={voiceState}
+            hidden={!conversationOpen}
+          />
+          {!conversationOpen ? (
+            <div className="demo-hidden-transcript">
+              <p>Transcript is hidden.</p>
+              <button type="button" onClick={() => setConversationOpen(true)}>
+                Show conversation
+              </button>
+            </div>
+          ) : null}
+        </>
+      }
+      audio={
+        <div className="hidden">
+          {remoteUsers.map((user) => (
+            <RemoteUser key={user.uid} user={user} />
+          ))}
+        </div>
+      }
+      controls={
+        <VoiceDock
+          state={voiceState}
+          micEnabled={isEnabled}
+          disabled={!localMicrophoneTrack}
+          ending={ending}
+          micPending={micPending}
+          conversationOpen={conversationOpen}
+          conversationId="scenario-transcript"
+          onToggleVoice={handleMicToggle}
+          onEnd={handleEndConversation}
+          onToggleConversation={() => setConversationOpen((open) => !open)}
+          devices={
+            <MicrophoneSelector localMicrophoneTrack={localMicrophoneTrack} />
+          }
+        />
+      }
+    />
+  );
 }

@@ -1,8 +1,7 @@
 'use client';
 
-import { useState, type ReactNode } from 'react';
-import Image from 'next/image';
-import { Camera, Check, Headphones, Mic, Package, ShoppingBag, SlidersHorizontal, Trash2 } from 'lucide-react';
+import { useState } from 'react';
+import { Camera, Check, Mic, Package, ShoppingBag, SlidersHorizontal, Trash2 } from 'lucide-react';
 import type { useShopping } from '@/hooks/use-shopping';
 import type { ShoppingOrder, CartQuote } from '@/scenarios/09-voice-shopping/shopping-types';
 import { Button } from './ui/button';
@@ -16,9 +15,7 @@ function OrderLines({ quote }: { quote: CartQuote }) {
 }
 
 type Shopping = ReturnType<typeof useShopping>;
-export function ShoppingWorkbench({ shopping, voice, onStartVoice, voiceActive, voiceLoading }: {
-  shopping: Shopping; voice: ReactNode; onStartVoice: () => void; voiceActive: boolean; voiceLoading: boolean;
-}) {
+export function ShoppingWorkbench({ shopping, embedded = false }: { shopping: Shopping; embedded?: boolean }) {
   const { session, products, error, busy, loading, mutate, refresh } = shopping;
   const [category, setCategory] = useState('microphone');
   const [budget, setBudget] = useState('');
@@ -33,15 +30,8 @@ export function ShoppingWorkbench({ shopping, voice, onStartVoice, voiceActive, 
   const disabled = busy || loading || !session;
   const quantity = (id: string) => session?.cart?.items.find(item => item.product_id === id)?.quantity ?? 0;
 
-  return <div className="shopping-page">
-    <header className="shopping-header"><div className="shopping-brand"><Image src="/agora-logo-mark.svg" alt="Agora" width={34} height={34} /><div><span className="shopping-eyebrow">SCENARIO 09</span><h1>Voice Shopping</h1></div></div>
-      <p>Compare electronics. Review your basket. Keep a saved order.</p>
-      {!voiceActive && <Button onClick={onStartVoice} disabled={disabled || voiceLoading}><Mic size={16} />{voiceLoading ? 'Connecting…' : 'Talk to Shopping Assistant'}</Button>}
-    </header>
+  return <div className={embedded ? "shopping-page shopping-embedded" : "shopping-page"}>
     <main className="shopping-layout">
-      <aside className="shopping-assistant"><div className="shopping-section-heading"><Headphones size={18} /><h2>A little guidance, all the way through.</h2></div>{voice}
-        <div className="shopping-note"><span className="shopping-eyebrow">HOW IT WORKS</span><ol><li>Share your budget and intended use.</li><li>Compare options and choose quantities.</li><li>Review the full total before confirming.</li><li>Find or cancel your saved order below.</li></ol></div>
-      </aside>
       <div className="shopping-content">
         {error && <div className="shopping-error" role="alert"><p>{error}</p><Button variant="outline" size="sm" disabled={busy} onClick={() => session ? void refresh() : location.reload()}>Try Again</Button></div>}
         <section className="shopping-catalog" aria-labelledby="catalog-heading"><div className="shopping-section-heading"><div><span className="shopping-eyebrow">01 / FIND YOUR FIT</span><h2 id="catalog-heading">Choose your setup</h2></div><span className="shopping-muted">Fixed example catalog · USD</span></div>

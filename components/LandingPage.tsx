@@ -11,11 +11,9 @@ import type {
 } from '../types/conversation';
 import { ErrorBoundary } from './ErrorBoundary';
 import { LoadingSkeleton } from './LoadingSkeleton';
-import { QuickstartPreCallCard } from './QuickstartPreCallCard';
+import { ScenarioShell, useScenarioUi } from './ScenarioShell';
 import { ShoppingWorkbench } from './ShoppingWorkbench';
 import { useShopping } from '@/hooks/use-shopping';
-import { ConversationPanel } from './agent-ui/conversation-panel';
-import { TooltipProvider } from './ui/tooltip';
 
 // Dynamically import the ConversationComponent with ssr disabled
 const ConversationComponent = dynamic(() => import('./ConversationComponent'), {
@@ -59,7 +57,9 @@ const AgoraProvider = dynamic(
 
 export default function LandingPage() {
   const [showConversation, setShowConversation] = useState(false);
-  const [entryOpen, setEntryOpen] = useState(true);
+  const ui = useScenarioUi();
+  const [ending, setEnding] = useState(false);
+  const endPending = useRef(false);
   const shopping = useShopping(showConversation);
   const startPending = useRef(false);
 
@@ -79,6 +79,7 @@ export default function LandingPage() {
     if (startPending.current || !shopping.session || showConversation) return;
     startPending.current = true;
     setIsLoading(true);
+    ui.start();
     setError(null);
     setAgentJoinError(false);
 
@@ -143,9 +144,8 @@ export default function LandingPage() {
 
       // 3. All dependencies ready — store state and show conversation
       setRtmClient(rtm);
-      setAgoraData({ ...responseData, agentId: agentData?.agent_id });
+      setAgoraData({ ...responseData, agentId: agentData?.agent_id, startedAt: Date.now() });
       setShowConversation(true);
-      setEntryOpen(false);
     } catch (err) {
       setError('Voice shopping could not connect. Please try again, or continue with the product catalog.');
       console.error('Error starting conversation:', err);
@@ -193,41 +193,49 @@ export default function LandingPage() {
   );
 
   const handleEndConversation = async () => {
-    // Stop the AI agent
-    if (agoraData?.agentId) {
-      try {
-        // console.log('Stopping agent:', agoraData.agentId);
-        const response = await fetch('/api/stop-conversation', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ agent_id: agoraData.agentId }),
-        });
-        if (!response.ok) {
-          console.error('Failed to stop agent:', await response.text());
+    if (endPending.current) return;
+    endPending.current = true;
+    setEnding(true);
+    try {
+      // Stop the AI agent
+      if (agoraData?.agentId) {
+        try {
+          // console.log('Stopping agent:', agoraData.agentId);
+          const response = await fetch('/api/stop-conversation', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ agent_id: agoraData.agentId }),
+          });
+          if (!response.ok) {
+            console.error('Failed to stop agent:', await response.text());
+          }
+          // else console.log('Agent stopped successfully');
+        } catch (error) {
+          console.error('Error stopping agent:', error);
         }
-        // else console.log('Agent stopped successfully');
-      } catch (error) {
-        console.error('Error stopping agent:', error);
       }
-    }
 
-    // Tear down RTM — owned here since we created it here
-    rtmClient?.logout().catch((err) => console.error('RTM logout error:', err));
-    setRtmClient(null);
-    setShowConversation(false);
+      // Tear down RTM — owned here since we created it here
+      rtmClient?.logout().catch((err) => console.error('RTM logout error:', err));
+      setRtmClient(null);
+      setShowConversation(false);
+      ui.end();
+    } finally {
+      endPending.current = false;
+      setEnding(false);
+    }
   };
 
   return (
-    <TooltipProvider>
-      <ShoppingWorkbench shopping={shopping} voiceActive={showConversation} voiceLoading={isLoading} onStartVoice={handleStartConversation} voice={
-        showConversation && agoraData && rtmClient ? <>
-          {agentJoinError && <p role="alert" className="shopping-error">The shopping assistant could not connect. You can still use the catalog and basket.</p>}
-          <Suspense fallback={<LoadingSkeleton />}><ErrorBoundary><AgoraProvider>
-            <ConversationComponent agoraData={agoraData} rtmClient={rtmClient} onTokenWillExpire={handleTokenWillExpire} onEndConversation={handleEndConversation} />
-          </AgoraProvider></ErrorBoundary></Suspense>
-        </> : <><ConversationPanel messages={[]} />{error && <p role="alert" className="shopping-error">{error}</p>}</>
-      } />
-      <QuickstartPreCallCard open={entryOpen} onOpenChange={setEntryOpen} isLoading={isLoading} disabled={!shopping.session || shopping.loading} error={error} onStartConversation={handleStartConversation} />
-    </TooltipProvider>
+    <ScenarioShell ui={ui} active={showConversation} loading={isLoading} error={error} disabled={!shopping.session || shopping.loading} onStart={handleStartConversation}
+      business={<><ShoppingWorkbench shopping={shopping} embedded /></>}>
+      {agentJoinError && <p role="alert" className="shopping-error">The shopping assistant could not connect. You can still use the catalog and basket.</p>}
+      {error && <p className="demo-workspace-fallback" role="alert">{error}</p>}
+      {showConversation && agoraData && rtmClient && <Suspense fallback={<LoadingSkeleton />}><ErrorBoundary><AgoraProvider>
+        <ConversationComponent agoraData={agoraData} rtmClient={rtmClient} onTokenWillExpire={handleTokenWillExpire} onEndConversation={handleEndConversation}
+          onActivityChange={ui.setActivity} onInspectionChange={ui.setInspection} ending={ending}
+          startupError={agentJoinError ? "The assistant could not connect. End this session and try again." : undefined} />
+      </AgoraProvider></ErrorBoundary></Suspense>}
+    </ScenarioShell>
   );
 }
