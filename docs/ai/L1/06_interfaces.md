@@ -1,113 +1,48 @@
 # 06 Interfaces
 
+> Actual scenario API, event and configuration boundaries.
 
-## Scenario 09 current behavior
+## Browser Or User-Facing APIs
 
-Invite additionally requires shopping_session_id. TOP_TEN_SCENARIO_TOOL_BASE_URL optionally enables voice tools; without it, voice uses local catalog facts without basket/order actions. Shopping root: /api/scenarios/09-voice-shopping. POST /sessions creates a capability session; GET /sessions/{id} reads cart/orders; POST /sessions/{id}/cart sets product_id and quantity (0 removes); POST /sessions/{id}/orders accepts quote_id and confirmed:true; GET /sessions/{id}/orders lists orders; GET/POST /sessions/{id}/orders/{orderId} queries/cancels (POST requires confirmed:true). GET /products supports q/category/max_price; GET /inventory returns simulated availability. All writes return the updated session. Orders are unpaid or cancelled, never paid. See root README for exact shapes and error codes.
+- `GET /api/generate-agora-token`: optional uid/channel; returns `{ token, uid, channel }`; server credential/configuration errors return failure.
+- `POST /api/invite-agent`: requester/channel are required. The invite additionally requires `shopping_session_id`, created by the shopping session API and shared with the browser. Returns Agent ID, creation time and state; input and runtime failures are reported explicitly.
+- `POST /api/stop-conversation`: requires agent_id; already-stopping/not-found handling is idempotent.
+- `POST /api/chat/completions`: optional custom-LLM proxy, not used by the default managed pipeline.
 
-> Contracts at repo boundaries: API routes, env vars, runtime events, and shared TypeScript payloads.
+`search_products`, `get_inventory`, `get_shopping_session`, `set_cart_item`, `confirm_order`, `get_order` and `cancel_order` use the shopping API. `shopping_session_id` is validated by invite and fixed into tool paths. Quantity zero removes an item. Quote changes invalidate earlier confirmation; a repeated confirmed quote returns its original order.
 
-## HTTP Route Contracts
+The assistant compares prompt catalog facts and summarizes purchase intent, but cannot edit the basket, generate server quotes or save/cancel orders by voice. Browser business controls remain available independently.
 
-### `GET /api/generate-agora-token`
+Seven session-bound tools can search products, inspect inventory, read/edit the basket and confirm, look up or cancel an unpaid order.
 
-Query params:
+Use the scenario-specific entry and persistent identity; starting voice requires a user action.
 
-- `uid` optional; invalid/zero resolves to random RTM-safe UID.
-- `channel` optional; defaults to generated `ai-conversation-<ts>-<rand>`.
 
-Success response:
 
-```json
-{ "token": "...", "uid": "1234", "channel": "ai-conversation-..." }
-```
+See [scenario guide](../../../scenarios/09-voice-shopping/README.md) and the scenario source for exact business request shapes, validation errors and ownership rules.
 
-Failure response: `{ "error": string, "details"?: string }` with `500`.
+## Events And Media
 
-### `POST /api/invite-agent`
-
-Body (`ClientStartRequest`):
-
-```json
-{ "requester_id": "1234", "channel_name": "ai-conversation-..." }
-```
-
-Success (`AgentResponse`):
-
-```json
-{ "agent_id": "...", "create_ts": 1710000000, "state": "RUNNING" }
-```
-
-Validation failures return `400`; server failures return `500`.
-
-### `POST /api/stop-conversation`
-
-Body (`StopConversationRequest`): `{ "agent_id": "..." }`.
-
-Responses:
-
-- `{ "success": true }`
-- `{ "success": true, "state": "already-stopping" }` for idempotent stop state
-- `{ "error": string }` on failure
-
-### `POST /api/chat/completions`
-
-Optional SSE proxy path (not default runtime path). Requires `NEXT_LLM_API_KEY` and `NEXT_LLM_URL` when used.
-
-## Event/Data Interfaces
-
-- RTM transcript/state/metrics/errors consumed through `AgoraVoiceAI` event emitter.
-- Raw RTM `message` event parsed as fallback for `message.error` and `message.sal_status` payloads.
-- `AGENT_METRICS` payloads displayed by `QuickstartPipelineMetrics`.
+RTC carries microphone and synthesized audio. RTM/toolkit provides TRANSCRIPT_UPDATED, AGENT_STATE_CHANGED, AGENT_METRICS, completed-turn, error and SAL events where reported. Normalize toolkit local uid zero before display and retain interrupted turns. Preserve missing metric fields and data provenance; Inspector outcomes are manually confirmed.
 
 ## Environment Contract
 
-Required:
+Local Next.js reads `.env.local` from tracked `env.local.example`. Hosted/Docker servers inject runtime values; the public App ID must also be supplied to the browser build.
 
-- `NEXT_PUBLIC_AGORA_APP_ID`
-- `NEXT_AGORA_APP_CERTIFICATE`
+| Variable | Required | Owner / exposure | Purpose |
+| --- | --- | --- | --- |
+| `NEXT_PUBLIC_AGORA_APP_ID` | Required | Next.js build and runtime; public | App ID from the selected Agora project; Docker must receive the same value at build and runtime. |
+| `NEXT_AGORA_APP_CERTIFICATE` | Required | Next.js server runtime; secret | Signs RTC/RTM credentials and authenticates managed Agent operations; never a build argument. |
+| `TOP_TEN_SCENARIO_TOOL_BASE_URL` | Optional | Next.js server; non-secret | This same app's public HTTPS origin. Omit for default conversation; enabling tools requires actual cloud reachability. |
+| `SHOPPING_DATA_FILE` | Optional | Next.js server; local path | Optional path to the persistent shopping JSON ledger; use a separate temporary path for checks. |
+| `NEXT_DIST_DIR` | Optional | Next.js build/start; non-secret | Defaults to .next. Use one matching output directory for native build/start; the Docker path uses .next. |
 
-This is the complete base `.env.local` contract. The optional BYOK route and provider snippets use additional variables only when a developer explicitly enables them.
+## External Services
 
-## Test Coverage for Interfaces
-
-- `scripts/verify-api-contracts.ts` asserts token generation, input validation, env failures, and SSE framing cases.
-
-## Shared Client-Side Interfaces
-
-From `types/conversation.ts` (high-use):
-
-- `AgoraTokenData`: token bootstrap payload consumed by `LandingPage`.
-- `AgoraRenewalTokens`: renewal callback result (`rtcToken`, `rtmToken`).
-- `ConversationComponentProps`: runtime dependencies for in-call component.
-
-## Interface Invariants
-
-- Token payload must always include `token`, `uid`, `channel`.
-- Invite route requires both `requester_id` and `channel_name`.
-- Stop route requires `agent_id`; missing should never be tolerated silently.
-- Token route should always return UID as string for downstream compatibility.
-
-## Event Interface Notes
-
-- Metrics stream entries are append-only in component state, capped to recent window.
-- Connection issue records carry `source`, `agentUserId`, code/message, timestamp.
-- SAL and signaling fallback payloads are parsed defensively because message schema can vary.
-
-## Backward Compatibility Guidance
-
-- If route response shape changes, update both client consumers and contract tests in same change.
-- If adding fields, keep existing fields stable to avoid quickstart consumer breakage.
-- Reflect interface changes in README and L1 docs to keep sample copyable.
+The server uses agora-agents with the configured managed STT/LLM/TTS providers. The browser uses RTC, Signaling and the Agent Client Toolkit. Optional business tools call this same app over public HTTPS, and their returned success is required before reporting an action complete. Provider BYOK blocks are opt-in, server-only and require separate verification.
 
 ## Related Deep Dives
 
-- [conversation_lifecycle.md](L2/conversation_lifecycle.md) — How route contracts are used in sequence.
-- [transcript_pipeline.md](L2/transcript_pipeline.md) — Event-level contract mapping.
-
-
-## Local conversation and optional tools
-
-Default conversations append catalog.json products, attributes, USD prices and fixed fictional stock to the prompt. The assistant can compare products and summarize purchase intent and estimated totals; it cannot update the browser basket, create server quotes, save/cancel orders or reserve stock. Browser business APIs remain available independently. A public HTTPS tool origin enables the existing seven session-bound tools; tool-mode facts and outcomes require successful responses, with no fixture fallback.
-
-TOP_TEN_SCENARIO_TOOL_BASE_URL is optional. Only an explicitly configured public HTTPS endpoint enables tools; malformed, HTTP, localhost and local/private origins leave tools disabled. URL validation does not prove network reachability. No tunnel, knowledge base or database is needed for the default conversation. Local checks do not establish live speech or cloud callback acceptance.
+- [Tokens](L2/token_model.md)
+- [Transcript pipeline](L2/transcript_pipeline.md)
+- [Agent configuration](L2/invite_agent_config.md)

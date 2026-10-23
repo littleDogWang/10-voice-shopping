@@ -1,152 +1,45 @@
-> **When to Read This:** Load this document when you are changing the agent's prompt, voice, VAD behavior, model selection, or wiring a bring-your-own-key (BYOK) provider.
+# Scenario Agent Configuration
 
-# Invite Agent Config
+> Read when changing Voice Shopping Assistant's prompt, tools, provider chain or turn detection.
 
-## Where It Lives
+## Source Files
 
-All of the managed agent configuration is built in `app/api/invite-agent/route.ts`. The route receives `{ requester_id, channel_name }` from `LandingPage`, constructs an `Agent` from `agora-agents`, and starts a session bound to the requester's RTC channel.
+- `scenarios/09-voice-shopping/config.ts`: role, workflow, guardrails and greeting.
+- `scenarios/index.ts`: selected prompt and default/tool mode context.
+- `scenarios/tool-contracts.ts`: optional tool origin validation, schemas and server-bound scope.
+- `app/api/invite-agent/route.ts`: actual SDK builder and session options.
+- `scenarios/runtime-profile.ts`: non-secret configured provider/model display.
 
-## Top-Level Constants
+There are no generic Ada/ADA_PROMPT constants to edit. Use the scenario config and prompt assembly actually imported by the invite route.
 
-| Constant            | Default                                              | Purpose                                                   |
-| ------------------- | ---------------------------------------------------- | --------------------------------------------------------- |
-| `ADA_PROMPT`        | Long-form instructions for "Ada", an Agora assistant | The system prompt for the LLM.                            |
-| `GREETING`          | Friendly first line                                   | Spoken on session start.                                 |
+## Request And Startup
 
-Agent behavior is configured in code: edit `GREETING` or `ADA_PROMPT` directly.
+The invite additionally requires `shopping_session_id`, created by the shopping session API and shared with the browser.
 
-## The Agent Builder Chain
+The server reads the App ID and App Certificate, builds AgoraClient with the selected area, and creates an Agent. The configured pipeline is Deepgram nova-3, OpenAI gpt-4o-mini and MiniMax speech_2_6_turbo. Copy the route's current builder pattern and createSession options; do not add an extra client argument or reproduce older SDK signatures.
 
-`AgoraClient` is constructed first — it carries the region and credentials for all API calls. `area` belongs here, not on the session.
+The browser and invite route share DEFAULT_AGENT_UID. RTM, transcript/error delivery and metrics remain enabled. Session startup returns the Agent ID, creation timestamp and state; ending uses that same Agent ID.
 
-```ts
-const client = new AgoraClient({ area: Area.US, appId, appCertificate });
+## Prompt And Tools
 
-const agent = new Agent({
-  name: `conversation-${Date.now()}-${randomHex}`,
-  instructions: ADA_PROMPT,
-  greeting: GREETING,
-  failureMessage: 'Please wait a moment.',
-  maxHistory: 50,
-  turnDetection: {
-    config: {
-      speech_threshold: 0.5,
-      start_of_speech: { /* VAD on-start params */ },
-      end_of_speech:   { /* VAD on-end params */ },
-    },
-  },
-  advancedFeatures: { enable_rtm: true, enable_tools: true },
-  parameters: {
-    data_channel: 'rtm',
-    enable_error_message: true,
-    enable_metrics: true,
-  },
-})
-  .withStt(new DeepgramSTT({ model: 'nova-3', language: 'en' }))
-  .withLlm(new OpenAI({
-    model: 'gpt-4o-mini',
-    greetingMessage: GREETING,
-    failureMessage: 'Please wait a moment.',
-    maxHistory: 15,
-    params: { max_tokens: 1024, temperature: 0.7, top_p: 0.95 },
-  }))
-  .withTts(new MiniMaxTTS({
-    model: 'speech_2_6_turbo',
-    voiceId: 'English_captivating_female1',
-  }));
-```
+Default behavior: The assistant compares prompt catalog facts and summarizes purchase intent, but cannot edit the basket, generate server quotes or save/cancel orders by voice. Browser business controls remain available independently.
 
-## Session Options
+Tool behavior: Seven session-bound tools can search products, inspect inventory, read/edit the basket and confirm, look up or cancel an unpaid order.
 
-`createSession` takes the `AgoraClient` as its first argument, then the session options object. `session.start()` is called separately and returns the `agentId`.
+`search_products`, `get_inventory`, `get_shopping_session`, `set_cart_item`, `confirm_order`, `get_order` and `cancel_order` use the shopping API. `shopping_session_id` is validated by invite and fixed into tool paths. Quantity zero removes an item. Quote changes invalidate earlier confirmation; a repeated confirmed quote returns its original order.
 
-```ts
-const session = agent.createSession(client, {
-  channel: channel_name,
-  agentUid,
-  remoteUids: [requester_id],
-  idleTimeout: 30,
-  expiresIn: ExpiresIn.hours(1),
-  debug: false,
-});
-const agentId = await session.start();
-```
+There is no real purchase, payment, shipping, tax calculation, fulfillment or refund. Prices are server-derived; any cart edit requires a new quote review and explicit confirmation.
 
-| Option        | Effect                                                                               |
-| ------------- | ------------------------------------------------------------------------------------ |
-| `channel`     | The RTC channel name the agent joins.                                                |
-| `agentUid`    | The UID the agent occupies in the channel, shared through `lib/agora.ts`.             |
-| `remoteUids`  | Restricts the agent to the requester's UID — protects against cross-channel sniping. |
-| `idleTimeout` | Seconds of silence before the session ends.                                          |
-| `expiresIn`   | Hard ceiling on session length, mirrors the 1-hour RTC token.                        |
-| `debug`       | Logs Agora REST API calls to the console when `true`.                                |
+## Provider And Turn Detection Changes
 
-## Editing Each Surface
-
-### Change the prompt
-
-Edit `ADA_PROMPT`. Keep it under the LLM's context window — `gpt-4o-mini` handles thousands of tokens but very long prompts amplify latency.
-
-### Change the greeting
-
-Edit `GREETING` in `app/api/invite-agent/route.ts`.
-
-### Change VAD behavior
-
-Edit `turnDetection.config.start_of_speech` and `turnDetection.config.end_of_speech`. Both blocks accept the new VAD param shape — do **not** revert to the deprecated `turnDetection.type: 'agora_vad'`.
-
-### Swap the STT model
-
-Replace the `DeepgramSTT` constructor. To use Deepgram with a BYOK key, set `NEXT_DEEPGRAM_API_KEY` and pass `apiKey: process.env.NEXT_DEEPGRAM_API_KEY` to the constructor.
-
-### Swap the LLM
-
-Replace `OpenAI` with another LLM class from `agora-agents`. For a custom URL, point the constructor at `process.env.NEXT_LLM_URL` and pass `apiKey: process.env.NEXT_LLM_API_KEY`. Wiring through `app/api/chat/completions/route.ts` is documented in `docs/ai/L1/05_workflows.md`.
-
-### Swap the TTS
-
-Replace `MiniMaxTTS`. ElevenLabs is the common BYOK choice — use `NEXT_ELEVENLABS_API_KEY` and `NEXT_ELEVENLABS_VOICE_ID`. The commented BYOK example in the route shows the constructor shape.
-
-## Response Contract
-
-On success the route returns `AgentResponse`:
-
-```json
-{
-  "agent_id": "string",
-  "create_ts": 1700000000,
-  "state": "RUNNING"
-}
-```
-
-`agent_id` is what `LandingPage` later passes to `/api/stop-conversation`.
+Edit the actual constructor blocks and turnDetection.config fields in the invite route. Provider BYOK examples are opt-in; keys stay server-side and are not part of the default two-key environment contract. For recruitment, preserve the configured 1,500 ms end-of-speech pause and 50-message LLM history unless intentionally changing interview pacing.
 
 ## Verification
 
-`scripts/verify-api-contracts.ts` mocks `Agent.prototype.createSession` and asserts:
-
-- Missing `channel_name` or `requester_id` → `400`.
-- Mocked success → `200` with `agent_id`, `create_ts`, `state`.
-
-After editing this file, run:
-
-```bash
-pnpm run verify:api
-pnpm run typecheck
-```
-
-## Failure Modes
-
-| Symptom                                                | Cause                                                          |
-| ------------------------------------------------------ | -------------------------------------------------------------- |
-| `400 channel_name and requester_id are required`       | Browser sent an empty body or wrong field names.               |
-| `500 Agora credentials are not set`                    | `NEXT_AGORA_APP_CERTIFICATE` missing in env.                   |
-| Agent joins but never speaks                           | TTS misconfigured (wrong `voiceId` or missing BYOK key).       |
-| Agent state stuck on `IDLE`                            | `enable_rtm: true` missing or RTM client not subscribed yet.   |
-| `verify:api` fails on the route                        | New required field added without updating the harness.         |
+Run `pnpm run verify:api`, `pnpm run verify:scenario` and canonical `pnpm run verify`. Real microphone pacing, interruptions and cloud HTTP execution require separate acceptance; mock Agent startup cannot establish those outcomes.
 
 ## See Also
 
-- [Back to Workflows](../05_workflows.md)
-- [Back to Interfaces](../06_interfaces.md)
-- [Token Model](token_model.md)
+- [Interfaces](../06_interfaces.md)
+- [Workflows](../05_workflows.md)
+- [Token model](token_model.md)
