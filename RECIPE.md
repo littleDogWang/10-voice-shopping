@@ -30,7 +30,7 @@ Run [Quick Start](#5-quick-start), open [http://localhost:3000](http://localhost
 | Review and confirm | Add the option I chose, then read back everything in the basket before I confirm. | In tool mode, it reads the current server quote and asks for explicit agreement before saving an unpaid order. |
 | Cancel the result | Cancel the unpaid order we just created. | In tool mode, it identifies that order and asks for cancellation confirmation; a successful result is cancelled, not refunded. |
 
-Rows that describe tool actions require the optional public HTTPS tool configuration. In default mode, expect the limitations described above. These are acceptance cases to try, not a claim that a live voice run has passed. For the full scenario matrix, see [acceptance.md](scenarios/09-voice-shopping/acceptance.md).
+Rows that describe tool actions require the optional public HTTPS tool configuration. In default mode, expect the limitations described above. These are acceptance cases to try, not a claim that a live voice run has passed. For the full scenario matrix, see [acceptance.md](docs/scenario/acceptance.md).
 
 ## 3. Architecture & Tech Stack
 
@@ -61,7 +61,7 @@ flowchart LR
 | Next.js route handlers | Keep the App Certificate server-side, issue combined RTC/RTM tokens and manage Agent sessions. |
 | Scenario modules | Supply instructions, demo data and the optional business API/tool contracts. |
 
-The client uses `agora-rtc-react`, `agora-rtc-sdk-ng`, `agora-rtm` and `agora-agent-client-toolkit`; the server uses `agora-agents`. The configured pipeline is Deepgram nova-3 → OpenAI gpt-4o-mini → MiniMax speech_2_6_turbo with English speech. See [the invite route](app/api/invite-agent/route.ts) and [runtime profile](scenarios/runtime-profile.ts) when changing providers. No separate vendor API key is required for the default Agora-managed configuration.
+The client uses `agora-rtc-react`, `agora-rtc-sdk-ng`, `agora-rtm` and `agora-agent-client-toolkit`; the server uses `agora-agents`. The configured pipeline is Deepgram nova-3 → OpenAI gpt-4o-mini → MiniMax speech_2_6_turbo with English speech. See [the invite route](app/api/invite-agent/route.ts) and [runtime profile](lib/runtime-profile.ts) when changing providers. No separate vendor API key is required for the default Agora-managed configuration.
 
 ## 4. Prerequisites & Configuration
 
@@ -115,24 +115,24 @@ Open [http://localhost:3000](http://localhost:3000), choose **Start voice shoppi
 
 `search_products`, `get_inventory`, `get_shopping_session`, `set_cart_item`, `confirm_order`, `get_order` and `cancel_order` use the shopping API. `shopping_session_id` is validated by invite and fixed into tool paths. Quantity zero removes an item. Quote changes invalidate earlier confirmation; a repeated confirmed quote returns its original order.
 
-The invite additionally requires `shopping_session_id`, created by the shopping session API and shared with the browser. The supplied browser already handles this startup sequence. See [the scenario guide](scenarios/09-voice-shopping/README.md) for additional behavior and contracts.
+The invite additionally requires `shopping_session_id`, created by the shopping session API and shared with the browser. The supplied browser already handles this startup sequence. See [the scenario guide](docs/scenario/README.md) for additional behavior and contracts.
 
 ## 7. Customize for Your Business
 
 | Change | Source | How |
 | --- | --- | --- |
-| Catalog and prices | [catalog.json](scenarios/09-voice-shopping/catalog.json) | Replace fictional products, specifications, USD prices and initial stock. |
-| Basket, quotes and orders | [shopping.ts](scenarios/09-voice-shopping/shopping.ts) | Adapt storage and business rules; retain server pricing, current-quote confirmation and idempotency. |
-| Conversation | [config.ts](scenarios/09-voice-shopping/config.ts) | Change buying questions and summaries without bypassing consent or describing simulated orders as paid. |
+| Catalog and prices | [catalog.json](lib/voice-shopping/catalog.json) | Replace fictional products, specifications, USD prices and initial stock. |
+| Basket, quotes and orders | [shopping.ts](lib/voice-shopping/shopping.ts) | Adapt storage and business rules; retain server pricing, current-quote confirmation and idempotency. |
+| Conversation | [config.ts](lib/agent-config.ts) | Change buying questions and summaries without bypassing consent or describing simulated orders as paid. |
 
 To connect a commerce backend, replace shopping.ts persistence and stock operations with your authorized cart/order service while preserving session scope and quote validation. Test a stale quote and an out-of-stock item. Payment and shipping need separate integrations and separately confirmed outcomes.
 
 Shared integration points:
 
-- [scenarios/index.ts](scenarios/index.ts) assembles the selected scenario prompt.
-- [scenarios/tool-contracts.ts](scenarios/tool-contracts.ts) defines business tool schemas and server-bound routes.
+- [lib/agent-config.ts](lib/agent-config.ts) assembles the selected scenario prompt.
+- [lib/agent-tools.ts](lib/agent-tools.ts) defines business tool schemas and server-bound routes.
 - [app/api/invite-agent/route.ts](app/api/invite-agent/route.ts) selects the prompt, providers, turn detection and session settings.
-- [scenarios/presentation.ts](scenarios/presentation.ts) selects the scenario presentation; edit its scenario module for visible content.
+- [lib/presentation.ts](lib/presentation.ts) selects the scenario presentation; edit its scenario module for visible content.
 - [docs/ai/RECIPE.md](docs/ai/RECIPE.md) retains the machine-readable integration profile and lifecycle contracts.
 
 Keep combined RTC/RTM token generation, the StrictMode initialization guard, toolkit local-user UID remapping and interrupted transcript turns intact. Let the Agora React hooks own microphone and RTC teardown. Preserve server-bound business session scope when extending tools.
@@ -213,4 +213,4 @@ With the local prerequisites and credentials configured, also run `pnpm run veri
 | The assistant discusses the task but does not save or change it | Check whether the optional public tool origin is enabled. The default conversation has the limits in section 1. |
 | A tool fails or a result disappears | Inspect the actual API error, callback reachability and this scenario's storage/lifetime limits; do not claim success from speech alone. |
 
-See [the contributor guide](AGENTS.md), [scenario guide](scenarios/09-voice-shopping/README.md) and [MIT License](LICENSE) for further details.
+See [the contributor guide](AGENTS.md), [scenario guide](docs/scenario/README.md) and [MIT License](LICENSE) for further details.

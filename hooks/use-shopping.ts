@@ -1,8 +1,8 @@
 'use client';
 
 import { useCallback, useEffect, useRef, useState } from 'react';
-import type { Product } from '@/scenarios/09-voice-shopping/catalog';
-import type { ShoppingSession } from '@/scenarios/09-voice-shopping/shopping-types';
+import type { Product } from '@/lib/voice-shopping/catalog';
+import type { ShoppingSession } from '@/lib/voice-shopping/shopping-types';
 
 const root = '/api/scenarios/09-voice-shopping';
 const storageKey = 'voice-shopping-session';

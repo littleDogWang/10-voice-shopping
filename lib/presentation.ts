@@ -1,4 +1,5 @@
-import type { ScenarioPresentation } from '../presentation';
+import type { ScenarioPresentation } from '@/types/presentation';
+export type { ScenarioPresentation } from '@/types/presentation';
 
 export const presentation: ScenarioPresentation = {
   "id": "09-voice-shopping",
@@ -53,15 +54,15 @@ export const presentation: ScenarioPresentation = {
     "extensionPoints": [
       {
         "title": "Change assistant instructions",
-        "path": "scenarios/09-voice-shopping/config.ts"
+        "path": "lib/agent-config.ts"
       },
       {
         "title": "Adapt shopping.ts",
-        "path": "scenarios/09-voice-shopping/shopping.ts"
+        "path": "lib/voice-shopping/shopping.ts"
       },
       {
         "title": "Adapt shopping-types.ts",
-        "path": "scenarios/09-voice-shopping/shopping-types.ts"
+        "path": "lib/voice-shopping/shopping-types.ts"
       },
       {
         "title": "Choose models and voice",
@@ -69,8 +70,12 @@ export const presentation: ScenarioPresentation = {
       },
       {
         "title": "Adapt scenario UI content",
-        "path": "scenarios/09-voice-shopping/presentation.ts"
+        "path": "lib/presentation.ts"
       }
     ]
   }
 };
+
+export function getScenarioPresentation(): ScenarioPresentation {
+  return presentation;
+}

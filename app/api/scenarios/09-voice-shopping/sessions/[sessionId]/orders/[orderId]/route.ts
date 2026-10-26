@@ -1,5 +1,5 @@
-import { cancelOrder, getShoppingSession, ShoppingError } from '@/scenarios/09-voice-shopping/shopping';
-import { shoppingResponse, readShoppingBody } from '@/scenarios/09-voice-shopping/http';
+import { cancelOrder, getShoppingSession, ShoppingError } from '@/lib/voice-shopping/shopping';
+import { shoppingResponse, readShoppingBody } from '@/lib/voice-shopping/http';
 
 type Context = { params: Promise<{ sessionId: string; orderId: string }> };
 export async function GET(_request: Request, context: Context) {

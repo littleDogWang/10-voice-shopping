@@ -10,9 +10,9 @@ import {
 } from 'agora-agents';
 import { ClientStartRequest, AgentResponse } from '@/types/conversation';
 import { DEFAULT_AGENT_UID } from '@/lib/agora';
-import { getScenarioConfig, getScenarioPrompt } from '@/scenarios';
-import { getScenarioTools } from '@/scenarios/tool-contracts';
-import { getShoppingSession, ShoppingError } from '@/scenarios/09-voice-shopping/shopping';
+import { getScenarioConfig, getScenarioPrompt } from '@/lib/agent-config';
+import { getScenarioTools } from '@/lib/agent-tools';
+import { getShoppingSession, ShoppingError } from '@/lib/voice-shopping/shopping';
 
 // agentUid identifies the AI in the RTC channel and shares its default with the client.
 const agentUid = String(DEFAULT_AGENT_UID);

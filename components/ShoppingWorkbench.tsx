@@ -3,7 +3,7 @@
 import { useState } from 'react';
 import { Camera, Check, Mic, Package, ShoppingBag, SlidersHorizontal, Trash2 } from 'lucide-react';
 import type { useShopping } from '@/hooks/use-shopping';
-import type { ShoppingOrder, CartQuote } from '@/scenarios/09-voice-shopping/shopping-types';
+import type { ShoppingOrder, CartQuote } from '@/lib/voice-shopping/shopping-types';
 import { Button } from './ui/button';
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from './ui/dialog';
 

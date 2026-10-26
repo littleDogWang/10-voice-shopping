@@ -319,7 +319,7 @@ async function verifyInviteAgentSuccess() {
   const originalBase = process.env.TOP_TEN_SCENARIO_TOOL_BASE_URL;
   process.env.SHOPPING_DATA_FILE = path.join(directory, 'shopping.json');
   process.env.TOP_TEN_SCENARIO_TOOL_BASE_URL = 'https://shopping.example';
-  const { createShoppingSession } = await import('../scenarios/09-voice-shopping/shopping');
+  const { createShoppingSession } = await import('../lib/voice-shopping/shopping');
   const shoppingSession = await createShoppingSession();
   const { POST: inviteAgent } = await import('../app/api/invite-agent/route');
   const originalCreateSession = Agent.prototype.createSession;

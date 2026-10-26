@@ -4,9 +4,9 @@ import { tmpdir } from 'node:os';
 import path from 'node:path';
 import { execFileSync } from 'node:child_process';
 import { NextRequest } from 'next/server';
-import { createShoppingSession, getShoppingSession } from '../scenarios/09-voice-shopping/shopping';
-import type { ShoppingSession } from '../scenarios/09-voice-shopping/shopping-types';
-import { getScenarioTools } from '../scenarios/tool-contracts';
+import { createShoppingSession, getShoppingSession } from '../lib/voice-shopping/shopping';
+import type { ShoppingSession } from '../lib/voice-shopping/shopping-types';
+import { getScenarioTools } from '../lib/agent-tools';
 import { POST as createSession } from '../app/api/scenarios/09-voice-shopping/sessions/route';
 import { GET as sessionRoute } from '../app/api/scenarios/09-voice-shopping/sessions/[sessionId]/route';
 import { POST as cartRoute } from '../app/api/scenarios/09-voice-shopping/sessions/[sessionId]/cart/route';
@@ -106,7 +106,7 @@ async function main() {
 
     const restored = JSON.parse(await readFile(process.env.SHOPPING_DATA_FILE, 'utf8')) as { sessions: ShoppingSession[] };
     assert.equal(restored.sessions.find(entry => entry.session_id === session.session_id)?.orders[0].status, 'cancelled');
-    const output = execFileSync(process.execPath, ['--import', 'tsx', '--eval', `import('./scenarios/09-voice-shopping/shopping.ts').then(async m => console.log(JSON.stringify(await (m.getShoppingSession ?? m.default.getShoppingSession)('${session.session_id}'))))`], { encoding: 'utf8', cwd: process.cwd(), env: process.env });
+    const output = execFileSync(process.execPath, ['--import', 'tsx', '--eval', `import('./lib/voice-shopping/shopping.ts').then(async m => console.log(JSON.stringify(await (m.getShoppingSession ?? m.default.getShoppingSession)('${session.session_id}'))))`], { encoding: 'utf8', cwd: process.cwd(), env: process.env });
     assert.equal(JSON.parse(output).orders[0].status, 'cancelled');
     checked('persisted results survive a fresh Node process');
 

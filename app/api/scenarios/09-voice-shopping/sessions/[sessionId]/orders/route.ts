@@ -1,5 +1,5 @@
-import { confirmOrder, getShoppingSession } from '@/scenarios/09-voice-shopping/shopping';
-import { shoppingResponse, readShoppingBody } from '@/scenarios/09-voice-shopping/http';
+import { confirmOrder, getShoppingSession } from '@/lib/voice-shopping/shopping';
+import { shoppingResponse, readShoppingBody } from '@/lib/voice-shopping/http';
 
 export async function GET(_request: Request, context: { params: Promise<{ sessionId: string }> }) {
   return shoppingResponse(async () => ({ orders: (await getShoppingSession((await context.params).sessionId)).orders, simulated: true }));

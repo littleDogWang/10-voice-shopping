@@ -4,7 +4,7 @@
 
 A voice shopping experience for six fictional microphones and cameras. Users can compare products, edit a basket through the browser, review a server-priced quote and save or cancel an unpaid simulated order. With tools enabled, the voice assistant uses the same shopping session as the page.
 
-One Next.js process owns the browser application and its HTTP routes. Agora cloud owns the managed STT → LLM → TTS pipeline; the browser is not a local speech/model runtime. The default provider configuration is recorded in the invite route and `scenarios/runtime-profile.ts`.
+One Next.js process owns the browser application and its HTTP routes. Agora cloud owns the managed STT → LLM → TTS pipeline; the browser is not a local speech/model runtime. The default provider configuration is recorded in the invite route and `lib/runtime-profile.ts`.
 
 ## Component Topology
 
@@ -32,8 +32,8 @@ Scenario routes -> single-process local file store
 - `components/ConversationComponent.tsx`: RTC/microphone hooks, toolkit events and transcript snapshots.
 - `app/api/generate-agora-token/route.ts`: RTM-capable token creation.
 - `app/api/invite-agent/route.ts`: privileged Agent configuration and startup.
-- `scenarios/09-voice-shopping/`: source of truth for scenario-specific rules and data.
-- `scenarios/tool-contracts.ts`: available tools, parameter schemas and server-bound call scope.
+- `lib/voice-shopping/`: source of truth for scenario-specific rules and data.
+- `lib/agent-tools.ts`: available tools, parameter schemas and server-bound call scope.
 - `lib/conversation.ts`: transcript UID/text normalization.
 
 ## Authentication And Secrets
@@ -59,4 +59,4 @@ The invite additionally requires `shopping_session_id`, created by the shopping 
 
 The token route returns `{ token, uid, channel }`; stop accepts `{ agent_id }` and handles an already-stopping session idempotently. The assistant compares prompt catalog facts and summarizes purchase intent, but cannot edit the basket, generate server quotes or save/cancel orders by voice. Browser business controls remain available independently. Seven session-bound tools can search products, inspect inventory, read/edit the basket and confirm, look up or cancel an unpaid order.
 
-See [Interfaces](docs/ai/L1/06_interfaces.md), [internal recipe](docs/ai/RECIPE.md) and [scenario guide](scenarios/09-voice-shopping/README.md) for contracts. Static checks, native startup, Docker startup and complete live speech/tool outcomes are separate evidence.
+See [Interfaces](docs/ai/L1/06_interfaces.md), [internal recipe](docs/ai/RECIPE.md) and [scenario guide](docs/scenario/README.md) for contracts. Static checks, native startup, Docker startup and complete live speech/tool outcomes are separate evidence.

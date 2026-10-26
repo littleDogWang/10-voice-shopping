@@ -1,5 +1,5 @@
-import { getInventory, ShoppingError } from '@/scenarios/09-voice-shopping/shopping';
-import { shoppingResponse } from '@/scenarios/09-voice-shopping/http';
+import { getInventory, ShoppingError } from '@/lib/voice-shopping/shopping';
+import { shoppingResponse } from '@/lib/voice-shopping/http';
 
 export async function GET(request: Request) {
   return shoppingResponse(() => {

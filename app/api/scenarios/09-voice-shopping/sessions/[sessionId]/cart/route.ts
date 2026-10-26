@@ -1,5 +1,5 @@
-import { setCartItem } from '@/scenarios/09-voice-shopping/shopping';
-import { shoppingResponse, readShoppingBody } from '@/scenarios/09-voice-shopping/http';
+import { setCartItem } from '@/lib/voice-shopping/shopping';
+import { shoppingResponse, readShoppingBody } from '@/lib/voice-shopping/http';
 
 export async function POST(request: Request, context: { params: Promise<{ sessionId: string }> }) {
   return shoppingResponse(async () => {
