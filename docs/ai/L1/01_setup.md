@@ -37,7 +37,7 @@ Default mode needs no business callback URL. The assistant compares prompt catal
 
 ## Verification
 
-Run `pnpm run verify` for pnpm run doctor && pnpm run verify:template && pnpm run lint && pnpm run typecheck && pnpm run verify:api && pnpm run verify:scenario && pnpm run verify:shopping && pnpm run build. Run `pnpm run verify:docker` separately for image build, non-root startup and a synthetic scenario route. Follow [README deployment](../../../README.md#deployment) for native/Docker commands.
+Run `pnpm run verify` for pnpm run doctor && pnpm run verify:template && pnpm run lint && pnpm run typecheck && pnpm run verify:api && pnpm run verify:signal && pnpm run verify:inspection && pnpm run verify:scenario && pnpm run verify:shopping && pnpm run build. Run `pnpm run verify:docker` separately for image build, non-root startup and a synthetic scenario route. Follow [README deployment](../../../README.md#deployment) for native/Docker commands.
 
 ## Verification Safety
 
