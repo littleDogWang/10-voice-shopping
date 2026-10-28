@@ -18,7 +18,7 @@ export function getToolBaseUrl(value = process.env.TOP_TEN_SCENARIO_TOOL_BASE_UR
 export function getScenarioTools(_scenarioId: string, baseUrl = process.env.TOP_TEN_SCENARIO_TOOL_BASE_URL, sessionId?: string): LlmTool[] {
   const origin = getToolBaseUrl(baseUrl);
   if (!origin || !sessionId) return [];
-  const root = `${origin}/api/scenarios/09-voice-shopping`;
+  const root = `${origin}/api/scenarios/10-voice-shopping`;
   const session = `/sessions/${encodeURIComponent(sessionId)}`;
   const text = { type: 'string' };
   function tool(name: string, description: string, method: 'GET' | 'POST', path: string,

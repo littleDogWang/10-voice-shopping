@@ -1,6 +1,6 @@
 # Agent Development Guide
 
-This guide is for coding agents making changes in `09-voice-shopping`.
+This guide is for coding agents making changes in `10-voice-shopping`.
 
 
 ## U.S. scenario content
@@ -11,9 +11,9 @@ Use a United States setting for fictional business examples, UI copy, Agent cont
 
 Use English for repository content, including documentation, code comments, UI copy and examples. Keep future additions and edits free of Chinese text.
 
-## Scenario 09 workflow
+## Scenario 10 workflow
 
-This repository is Voice Shopping: fixed fictional electronics, server-priced basket quotes and saved unpaid simulated orders. Use `lib/voice-shopping/shopping.ts` for storage/business rules and `shopping-types.ts` for response contracts. Shopping APIs live under `app/api/scenarios/09-voice-shopping/`; `hooks/use-shopping.ts` and `ShoppingWorkbench` own browser state and display. `LandingPage` passes the shopping session into invite; tools bind it server-side.
+This repository is Voice Shopping: fixed fictional electronics, server-priced basket quotes and saved unpaid simulated orders. Use `lib/voice-shopping/shopping.ts` for storage/business rules and `shopping-types.ts` for response contracts. Shopping APIs live under `app/api/scenarios/10-voice-shopping/`; `hooks/use-shopping.ts` and `ShoppingWorkbench` own browser state and display. `LandingPage` passes the shopping session into invite; tools bind it server-side.
 
 Run `pnpm run verify:shopping` alongside the base checks. Tests must use an isolated `SHOPPING_DATA_FILE`. Never confirm an edited quote, invent tool success, accept caller prices, expose other sessions or describe simulated orders as real purchases. Preserve explicit confirmation and idempotency. The local ledger supports one Node process with persistent disk; do not claim distributed/serverless persistence. `TOP_TEN_SCENARIO_TOOL_BASE_URL` must be a cloud-reachable origin for voice tools.
 

@@ -4,7 +4,7 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 import type { Product } from '@/lib/voice-shopping/catalog';
 import type { ShoppingSession } from '@/lib/voice-shopping/shopping-types';
 
-const root = '/api/scenarios/09-voice-shopping';
+const root = '/api/scenarios/10-voice-shopping';
 const storageKey = 'voice-shopping-session';
 
 export function shoppingErrorMessage(error: unknown) {

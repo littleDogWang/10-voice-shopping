@@ -21,8 +21,8 @@ The tracked schema is `env.local.example`; the local file is `.env.local`. Keep 
 ## Setup
 
 ```bash
-git clone https://github.com/littleDogWang/09-voice-shopping.git
-cd 09-voice-shopping
+git clone https://github.com/littleDogWang/10-voice-shopping.git
+cd 10-voice-shopping
 pnpm install --frozen-lockfile
 cp env.local.example .env.local
 ```

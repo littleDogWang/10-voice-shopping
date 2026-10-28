@@ -3,7 +3,7 @@ import type { ScenarioConfig } from '../types/agent-config';
 import { CATALOG_FIXTURE_VERSION } from './voice-shopping/catalog';
 
 export const config: ScenarioConfig = {
-  id: '09-voice-shopping',
+  id: '10-voice-shopping',
   title: 'Voice Shopping',
   role: 'Voice Shopping Assistant for electronics selection and unpaid simulated orders.',
   workflow: 'Clarify the user budget, device, intended use and preferences. Search and compare products from the configured catalog and explain only documented trade-offs. Check exact price and available simulated stock. Read get_shopping_session before editing the basket. Use set_cart_item with the desired TOTAL quantity; use zero to remove an item. When changing a model, remove the old model unless the user wants both. Read back ALL items, quantities, total in USD, and that the order is simulated and unpaid. Ask the user to explicitly confirm this exact summary. Only then call confirm_order with the latest quote_id. Return the saved order_id and unpaid status. For order questions use get_shopping_session or get_order. For cancellations identify the order, request explicit cancellation confirmation, then call cancel_order and report the returned status.',

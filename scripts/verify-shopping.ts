@@ -7,13 +7,13 @@ import { NextRequest } from 'next/server';
 import { createShoppingSession, getShoppingSession } from '../lib/voice-shopping/shopping';
 import type { ShoppingSession } from '../lib/voice-shopping/shopping-types';
 import { getScenarioTools } from '../lib/agent-tools';
-import { POST as createSession } from '../app/api/scenarios/09-voice-shopping/sessions/route';
-import { GET as sessionRoute } from '../app/api/scenarios/09-voice-shopping/sessions/[sessionId]/route';
-import { POST as cartRoute } from '../app/api/scenarios/09-voice-shopping/sessions/[sessionId]/cart/route';
-import { POST as orderRoute } from '../app/api/scenarios/09-voice-shopping/sessions/[sessionId]/orders/route';
-import { GET as getOrderRoute, POST as cancelRoute } from '../app/api/scenarios/09-voice-shopping/sessions/[sessionId]/orders/[orderId]/route';
-import { GET as productsRoute } from '../app/api/scenarios/09-voice-shopping/products/route';
-import { GET as inventoryRoute } from '../app/api/scenarios/09-voice-shopping/inventory/route';
+import { POST as createSession } from '../app/api/scenarios/10-voice-shopping/sessions/route';
+import { GET as sessionRoute } from '../app/api/scenarios/10-voice-shopping/sessions/[sessionId]/route';
+import { POST as cartRoute } from '../app/api/scenarios/10-voice-shopping/sessions/[sessionId]/cart/route';
+import { POST as orderRoute } from '../app/api/scenarios/10-voice-shopping/sessions/[sessionId]/orders/route';
+import { GET as getOrderRoute, POST as cancelRoute } from '../app/api/scenarios/10-voice-shopping/sessions/[sessionId]/orders/[orderId]/route';
+import { GET as productsRoute } from '../app/api/scenarios/10-voice-shopping/products/route';
+import { GET as inventoryRoute } from '../app/api/scenarios/10-voice-shopping/inventory/route';
 
 const request = (body: unknown) => new NextRequest('http://localhost/api/shopping', {
   method: 'POST', body: typeof body === 'string' ? body : JSON.stringify(body), headers: { 'Content-Type': 'application/json' },
@@ -110,9 +110,9 @@ async function main() {
     assert.equal(JSON.parse(output).orders[0].status, 'cancelled');
     checked('persisted results survive a fresh Node process');
 
-    const tools = getScenarioTools('09-voice-shopping', 'https://shopping.example', session.session_id);
+    const tools = getScenarioTools('10-voice-shopping', 'https://shopping.example', session.session_id);
     assert.equal(tools.length, 7);
-    assert.equal(getScenarioTools('09-voice-shopping', 'https://shopping.example').length, 0);
+    assert.equal(getScenarioTools('10-voice-shopping', 'https://shopping.example').length, 0);
     for (const tool of tools.slice(2)) assert(JSON.stringify(tool).includes(session.session_id));
     checked('all mutation and order tools are scoped to the current shopper');
     console.log(`Shopping checks passed: ${checks} groups`);

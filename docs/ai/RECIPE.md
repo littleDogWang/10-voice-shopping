@@ -102,7 +102,7 @@ Component layout, presentation copy, model/provider defaults, UI diagnostics and
 
 ## Consumer Onboarding Recipe
 
-1. Clone `https://github.com/littleDogWang/09-voice-shopping.git` and change into `09-voice-shopping`.
+1. Clone `https://github.com/littleDogWang/10-voice-shopping.git` and change into `10-voice-shopping`.
 2. With Node.js 22+ and pnpm 9.15.9, run `pnpm install --frozen-lockfile`.
 3. Copy `env.local.example` to `.env.local` only on a clean clone; fill the two Agora project credentials. Alternatively use the ready CLI's template-aware `agora quickstart env write . --template nextjs --project <your-project> --json`.
 4. Run `pnpm run doctor`, then `pnpm run dev`. Open http://localhost:3000 and choose the scenario start action.

@@ -16,8 +16,8 @@ Read the [eight-part recipe](RECIPE.md) for example conversations and business c
 ## Run It
 
 ```bash
-git clone https://github.com/littleDogWang/09-voice-shopping.git
-cd 09-voice-shopping
+git clone https://github.com/littleDogWang/10-voice-shopping.git
+cd 10-voice-shopping
 pnpm install --frozen-lockfile
 cp env.local.example .env.local
 ```
@@ -140,8 +140,8 @@ Native hosting runs `pnpm run build` and `pnpm run start` on the documented Node
 ### Docker
 
 ```bash
-docker build --build-arg NEXT_PUBLIC_AGORA_APP_ID=YOUR_AGORA_APP_ID -t 09-voice-shopping:local .
-docker run --rm -p 3000:3000 --env-file .env.local --mount source=09-voice-shopping-data,target=/app/.scenario-data 09-voice-shopping:local
+docker build --build-arg NEXT_PUBLIC_AGORA_APP_ID=YOUR_AGORA_APP_ID -t 10-voice-shopping:local .
+docker run --rm -p 3000:3000 --env-file .env.local --mount source=10-voice-shopping-data,target=/app/.scenario-data 10-voice-shopping:local
 ```
 
 Replace `YOUR_AGORA_APP_ID` with the public App ID used in `.env.local`. Next.js embeds that identifier in the browser bundle, so changing projects requires rebuilding the image. The App Certificate is supplied only at container runtime. The named volume preserves the non-root-owned `.scenario-data` directory. Leave custom host storage variables unset inside Docker or map them to the mounted directory; a host absolute path is not automatically mounted.

@@ -2,7 +2,7 @@
 
 Compare electronics and confirm an unpaid simulated order.
 
-[Try locally](#2-try-the-demo) · [Source on GitHub](https://github.com/littleDogWang/09-voice-shopping) · [Build with AI](#build-with-ai)
+[Try locally](#2-try-the-demo) · [Source on GitHub](https://github.com/littleDogWang/10-voice-shopping) · [Build with AI](#build-with-ai)
 
 TypeScript · Web · Next.js 16 / React 19 · Agora Conversational AI
 
@@ -86,8 +86,8 @@ Leave `TOP_TEN_SCENARIO_TOOL_BASE_URL` unset for the default conversation. To en
 From a terminal, clone this scenario rather than the generic starter:
 
 ```bash
-git clone https://github.com/littleDogWang/09-voice-shopping.git
-cd 09-voice-shopping
+git clone https://github.com/littleDogWang/10-voice-shopping.git
+cd 10-voice-shopping
 pnpm install --frozen-lockfile
 cp env.local.example .env.local
 ```
@@ -144,7 +144,7 @@ After cloning this repository, paste the following into your coding agent from y
 ```text
 Implement the Voice Shopping Assistant recipe in my application.
 
-Read RECIPE.md in the cloned 09-voice-shopping repository first, then inspect
+Read RECIPE.md in the cloned 10-voice-shopping repository first, then inspect
 its scenario modules, tool contracts and invite route. Read docs/ai/RECIPE.md
 and AGENTS.md in that repository for integration constraints.
 
@@ -172,8 +172,8 @@ These commands describe the repository's supported scripts; they do not attest t
 ### Docker deployment
 
 ```bash
-docker build --build-arg NEXT_PUBLIC_AGORA_APP_ID=YOUR_AGORA_APP_ID -t 09-voice-shopping:local .
-docker run --rm -p 3000:3000 --env-file .env.local --mount source=09-voice-shopping-data,target=/app/.scenario-data 09-voice-shopping:local
+docker build --build-arg NEXT_PUBLIC_AGORA_APP_ID=YOUR_AGORA_APP_ID -t 10-voice-shopping:local .
+docker run --rm -p 3000:3000 --env-file .env.local --mount source=10-voice-shopping-data,target=/app/.scenario-data 10-voice-shopping:local
 ```
 
 Replace `YOUR_AGORA_APP_ID` with the public App ID used in `.env.local`. Next.js embeds that identifier in the browser bundle, so changing projects requires rebuilding the image. The App Certificate is supplied only at container runtime. The named volume preserves the non-root-owned `.scenario-data` directory. Leave custom host storage variables unset inside Docker or map them to the mounted directory; a host absolute path is not automatically mounted.
