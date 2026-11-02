@@ -1,9 +1,6 @@
 import { AgoraClient, Agent } from 'agora-agents';
 import { RtcTokenBuilder } from 'agora-token';
 import { NextRequest } from 'next/server';
-import { mkdtemp, rm } from 'node:fs/promises';
-import { tmpdir } from 'node:os';
-import path from 'node:path';
 
 function assert(condition: unknown, message: string): asserts condition {
   if (!condition) {
@@ -314,13 +311,6 @@ async function verifyInviteAgentValidation() {
 }
 
 async function verifyInviteAgentSuccess() {
-  const directory = await mkdtemp(path.join(tmpdir(), 'shopping-invite-test-'));
-  const originalFile = process.env.SHOPPING_DATA_FILE;
-  const originalBase = process.env.TOP_TEN_SCENARIO_TOOL_BASE_URL;
-  process.env.SHOPPING_DATA_FILE = path.join(directory, 'shopping.json');
-  process.env.TOP_TEN_SCENARIO_TOOL_BASE_URL = 'https://shopping.example';
-  const { createShoppingSession } = await import('../lib/voice-shopping/shopping');
-  const shoppingSession = await createShoppingSession();
   const { POST: inviteAgent } = await import('../app/api/invite-agent/route');
   const originalCreateSession = Agent.prototype.createSession;
   let capturedSessionConfig: {
@@ -341,26 +331,10 @@ async function verifyInviteAgentSuccess() {
   }) as unknown as typeof Agent.prototype.createSession;
 
   try {
-    const missingSession = await inviteAgent(new NextRequest('http://localhost/api/invite-agent', {
-      method: 'POST', body: JSON.stringify({ requester_id: 'user-4321', channel_name: 'test-channel' }),
-    }));
-    assert(missingSession.status === 400, 'Invite must reject a missing shopping session before creating an agent');
-    const unknownSession = await inviteAgent(new NextRequest('http://localhost/api/invite-agent', {
-      method: 'POST', body: JSON.stringify({ requester_id: 'user-4321', channel_name: 'test-channel', shopping_session_id: 'unknown' }),
-    }));
-    assert(unknownSession.status === 404, 'Invite must reject unknown shopping sessions');
-    delete process.env.TOP_TEN_SCENARIO_TOOL_BASE_URL;
-    const noTools = await inviteAgent(new NextRequest('http://localhost/api/invite-agent', {
-      method: 'POST', body: JSON.stringify({ requester_id: 'user-4321', channel_name: 'test-channel', shopping_session_id: shoppingSession.session_id }),
-    }));
-    assert(noTools.status === 200, 'Invite must allow local catalog discussion without tool configuration');
-    assert(capturedSessionConfig !== null, 'Local discussion must create an agent session');
-    process.env.TOP_TEN_SCENARIO_TOOL_BASE_URL = 'https://shopping.example';
     const request = new NextRequest('http://localhost:3000/api/invite-agent', {
       body: JSON.stringify({
         requester_id: 'user-4321',
         channel_name: 'test-channel',
-        shopping_session_id: shoppingSession.session_id,
       }),
       method: 'POST',
     });
@@ -404,9 +378,6 @@ async function verifyInviteAgentSuccess() {
     );
   } finally {
     Agent.prototype.createSession = originalCreateSession;
-    if (originalFile === undefined) delete process.env.SHOPPING_DATA_FILE; else process.env.SHOPPING_DATA_FILE = originalFile;
-    if (originalBase === undefined) delete process.env.TOP_TEN_SCENARIO_TOOL_BASE_URL; else process.env.TOP_TEN_SCENARIO_TOOL_BASE_URL = originalBase;
-    await rm(directory, { recursive: true, force: true });
   }
 }
 

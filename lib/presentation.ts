@@ -4,24 +4,24 @@ export type { ScenarioPresentation } from '@/types/presentation';
 export const presentation: ScenarioPresentation = {
   "id": "10-voice-shopping",
   "name": "Voice Shopping Assistant",
-  "purpose": "Product comparison, basket and saved orders",
+  "purpose": "Scenario voice conversation",
   "headline": [
     "Find your next setup."
   ],
-  "summary": "Compare microphones and cameras, review your basket and save an unpaid example order.",
-  "featuresHeading": "Beyond starter",
+  "summary": "Compare illustrative microphones and cameras and talk through your preferences.",
+  "featuresHeading": "In this conversation",
   "features": [
     {
+      "emoji": "💬",
+      "title": "Product needs discussion"
+    },
+    {
       "emoji": "🎙️",
-      "title": "Compare products"
+      "title": "Illustrative product comparison"
     },
     {
-      "emoji": "🛒",
-      "title": "Review your basket"
-    },
-    {
-      "emoji": "📦",
-      "title": "Saved unpaid orders"
+      "emoji": "📝",
+      "title": "Verbal recommendation recap"
     }
   ],
   "builtWith": [
@@ -30,22 +30,22 @@ export const presentation: ScenarioPresentation = {
     "Next.js"
   ],
   "startLabel": "Start voice shopping",
-  "boundaryShort": "Fictional products and simulated stock. No payment or delivery.",
+  "boundaryShort": "Conversation only. No inventory lookup, basket, orders, payments or saved shopping history.",
   "outcomes": [
     {
-      "id": "found",
-      "label": "I found a suitable product"
+      "id": "helpful",
+      "label": "The conversation helped"
     },
     {
-      "id": "needs-help",
+      "id": "needs-guidance",
       "label": "I need more guidance"
     }
   ],
   "developer": {
-    "sourceUrl": "https://github.com/AgoraIO-Conversational-AI/agent-quickstart-nextjs",
-    "runCommand": "pnpm install\nagora login\nagora project use <your-project>\nagora project env write .env.local\npnpm dev",
+    "sourceUrl": "https://github.com/littleDogWang/10-voice-shopping",
+    "runCommand": "pnpm install --frozen-lockfile\npnpm run doctor\npnpm run dev",
     "skillsCommand": "npx skills add github:AgoraIO/skills",
-    "assistantPrompt": "Use Agora Skills to work in the existing 10-voice-shopping scenario checkout. Preserve the working Agora session lifecycle and business contracts. Help me adapt its business data and assistant instructions for my workflow.",
+    "assistantPrompt": "Work in this existing 10-voice-shopping voice demo. Preserve Agora RTC/RTM lifecycle and the conversation-only first-version boundary. Adapt the assistant instructions and static public background without adding business tools, records, data APIs or persistence.",
     "docsUrl": "https://docs.agora.io/en/ai/build/build-server-client",
     "sdkUrl": "https://www.npmjs.com/package/agora-agents",
     "consoleUrl": "https://console.agora.io/",
@@ -53,29 +53,19 @@ export const presentation: ScenarioPresentation = {
     "skillsUrl": "https://github.com/AgoraIO/skills",
     "extensionPoints": [
       {
-        "title": "Change assistant instructions",
+        "title": "Change the conversation",
         "path": "lib/agent-config.ts"
       },
       {
-        "title": "Adapt shopping.ts",
-        "path": "lib/voice-shopping/shopping.ts"
-      },
-      {
-        "title": "Adapt shopping-types.ts",
-        "path": "lib/voice-shopping/shopping-types.ts"
-      },
-      {
         "title": "Choose models and voice",
-        "path": "app/api/invite-agent/route.ts"
+        "path": "lib/runtime-profile.ts"
       },
       {
-        "title": "Adapt scenario UI content",
+        "title": "Adapt scenario UI copy",
         "path": "lib/presentation.ts"
       }
     ]
   }
 };
 
-export function getScenarioPresentation(): ScenarioPresentation {
-  return presentation;
-}
+export function getScenarioPresentation(): ScenarioPresentation { return presentation; }

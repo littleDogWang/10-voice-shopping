@@ -1,10 +1,6 @@
-import { getInventory, ShoppingError } from '@/lib/voice-shopping/shopping';
-import { shoppingResponse } from '@/lib/voice-shopping/http';
+import { NextResponse } from 'next/server';
 
-export async function GET(request: Request) {
-  return shoppingResponse(() => {
-    const productId = new URL(request.url).searchParams.get('product_id');
-    if (!productId) throw new ShoppingError('product_id is required');
-    return getInventory(productId);
-  });
+// Business data is not available in the conversation-only first version.
+export async function GET(_request?: Request, _context?: unknown) {
+  return NextResponse.json({ error: 'business_data_not_available', message: 'This first version provides voice conversation only.' }, { status: 410 });
 }

@@ -1,34 +1,25 @@
-# Voice Shopping Acceptance
+# Conversation-Only Acceptance
 
-## Automated behavior
+## Local regression
 
-Run `pnpm run verify:shopping` and `pnpm run verify:api`.
+- Run pnpm run verify.
+- A mocked Agent starts with only requester_id and channel_name.
+- Setting the former business-tool origin must not enable tools or create data state.
+- Business API routes return HTTP 410 and old data workbenches are not rendered.
 
-- Category/attribute/budget filtering returns exact catalog values; zero-stock products remain visible.
-- Reject malformed JSON, invalid quantities, missing products, unavailable stock and unknown sessions.
-- Ignore caller-provided prices and totals; calculate every line and total on the server.
-- Editing a cart invalidates old quotes; reject missing or non-boolean confirmation.
-- Confirmed orders have numbers, status unpaid, exact items and totals, and a cleared cart.
-- Retried confirmation does not create another order or reactivate a cancelled order.
-- A second shopper cannot query, confirm or cancel the first shopper's order using their own session.
-- Concurrent confirmations cannot oversell simulated stock. Failed confirmation preserves the basket.
-- Cancellation requires confirmation, is idempotent and releases stock.
-- Orders remain readable from a fresh Node process using the saved ledger.
-- All private/mutation tools bind the current shopping session, and startup rejects an unavailable tool configuration before contacting Agora.
+## Browser checks
 
-## Browser acceptance
+- Desktop and mobile initial Dialog, Preview first and persistent identity identify this scenario.
+- The start control is enabled without a business record or shopping session.
+- The first application request on start is the token request, with no business API call.
+- A failed token/invite is reported honestly and allows a retry.
 
-Inspect actual desktop and mobile rendering and capture/view screenshots of:
+## Real voice checks
 
-- Scenario-specific initial Dialog and persistent scenario identity.
-- Product comparison, budget/preference filters and no-match state.
-- Empty/populated basket, quantity changes, removal and changed-model selection.
-- Confirmation summary, Keep Editing, saved unpaid order and refresh/reload persistence.
-- Cancellation confirmation and cancelled result.
-- Inventory or network failure with no false success.
+- Say: I need a USB microphone for video calls under 150 dollars.
+- Say: Compare a desk camera with a studio camera for recording.
+- Ask for a recap, interrupt, correct an earlier detail and request to stop.
+- The assistant never claims a lookup, saved result or external action.
+- Check actual two-way audio, both transcript roles, microphone controls and clean Agent stop.
 
-Use the real local HTTP routes and components. Simulated commerce data must not be described as a real purchase. Mobile browser emulation is not real-device acceptance.
-
-## Live voice acceptance
-
-Requires Agora credentials and a cloud-reachable HTTPS tool origin. Speak through selection, model/quantity changes, explicit confirmation, order lookup and cancellation. Verify actual tool calls, page synchronization, transcript roles, microphone controls and stop/restart behavior. An unclear reply or changed basket must trigger a fresh summary/confirmation. Never claim that route tests or mocked speech validate this behavior.
+Mocked checks and browser screenshots do not establish real speech, model behavior or public deployment acceptance.

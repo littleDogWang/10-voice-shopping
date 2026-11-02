@@ -13,7 +13,6 @@ import { DEFAULT_AGENT_UID } from '@/lib/agora';
 import { RUNTIME_PROFILE } from '@/lib/runtime-profile';
 import { getScenarioConfig, getScenarioPrompt } from '@/lib/agent-config';
 import { getScenarioTools } from '@/lib/agent-tools';
-import { getShoppingSession, ShoppingError } from '@/lib/voice-shopping/shopping';
 
 // agentUid identifies the AI in the RTC channel and shares its default with the client.
 const agentUid = String(DEFAULT_AGENT_UID);
@@ -29,7 +28,7 @@ export async function POST(request: NextRequest) {
     // --- 1. Parse request ---
 
     const body: ClientStartRequest = await request.json();
-    const { requester_id, channel_name, shopping_session_id } = body;
+    const { requester_id, channel_name } = body;
 
     // Validate required env vars on first request so misconfiguration surfaces
     // with a clear error message rather than a silent failure.
@@ -43,21 +42,12 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    if (typeof shopping_session_id !== 'string') {
-      return NextResponse.json({ error: 'shopping_session_id is required' }, { status: 400 });
-    }
-    try { await getShoppingSession(shopping_session_id); }
-    catch (error) {
-      if (error instanceof ShoppingError) return NextResponse.json({ error: error.code }, { status: error.status });
-      throw error;
-    }
-
     // --- 2. Build and start the agent ---
 
     // AgoraClient authenticates API calls to the Agora Conversational AI service.
     // area: change to Area.EU or Area.AP for European or Asia-Pacific deployments.
     const scenario = getScenarioConfig();
-    const scenarioTools = getScenarioTools(scenario.id, undefined, shopping_session_id);
+    const scenarioTools = getScenarioTools();
     const client = new AgoraClient({
       area: Area.US,
       appId,
@@ -68,7 +58,7 @@ export async function POST(request: NextRequest) {
     // Omit vendor API keys for supported models — AgentKit infers reseller presets on start (see Agora Console / billing).
     const agent = new Agent({
       client,
-      instructions: getScenarioPrompt(scenario.id, scenarioTools.length > 0),
+      instructions: getScenarioPrompt(scenario.id),
       greeting: scenario.greeting,
       failureMessage: 'Please wait a moment.',
       maxHistory: 50,
@@ -92,8 +82,8 @@ export async function POST(request: NextRequest) {
         },
       },
       // RTM is required for transcript events in the browser client.
-      // Enable execution only when this session has configured REST tools.
-      advancedFeatures: { enable_rtm: true, enable_tools: scenarioTools.length > 0 },
+      // This first version never enables business tools.
+      advancedFeatures: { enable_rtm: true, enable_tools: false },
       // Required for browser RTM events:
       // - data_channel: 'rtm' enables RTM delivery path for state/metrics/errors
       // - enable_error_message emits AGENT_ERROR payloads
