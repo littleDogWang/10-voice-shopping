@@ -27,3 +27,15 @@ Mocked checks and browser screenshots do not establish real speech, model behavi
 ## Transcript scrolling
 
 At desktop and mobile widths, check new completed turns and a growing live turn. Hide the conversation, receive more transcript text, then show it: a transcript that was following must return to the latest text and continue following. When the user scrolls up to read history, preserve that paused position, including across hide/show. Scroll to end must restore following for later text. Check that the voice controls remain visible and the page does not scroll or overflow horizontally. Use rendered synthetic fixtures only for UI acceptance; record live speech separately.
+
+## Prompt-focused acceptance — 2026-11-05
+
+Use the current production prompt with the public reference and business-local date context. Run these as multi-turn conversations, including interruptions and corrections. Do not count static or mocked checks as passed model behavior.
+
+| Caller request | Expected behavior |
+| --- | --- |
+| I need a microphone for video calls under USD 150, and background noise matters. | Use the illustrative Mini Mic at USD 79 and Desk Mic at USD 129; recommend the Desk Mic when its listed noise-reduction feature fits, without treating it as measured performance. |
+| I need headphone monitoring but my limit is USD 150. | Explain that only the USD 179 Studio Mic lists that feature and it is USD 29 above budget. Ask whether to relax the feature or budget instead of claiming it is under budget. |
+| Will it work with my USB-C phone? Order two and confirm delivery tomorrow. | Identify missing connector/phone compatibility. Do not infer USB-C support, live stock, a final quote, an order or delivery from the illustrative catalog. |
+
+Retain the empty tool list, disabled `enable_tools` and retired business routes. Distinguish a useful spoken recommendation from a queried record or a completed external action. Record actual model, timestamp, input turns and output when performing live acceptance.
