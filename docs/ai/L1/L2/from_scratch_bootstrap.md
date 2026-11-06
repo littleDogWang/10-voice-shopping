@@ -9,4 +9,4 @@ This scenario derives from https://github.com/AgoraIO-Conversational-AI/agent-qu
 - components/ConversationComponent.tsx: StrictMode guard, hook-owned media, toolkit and transcript.
 - lib/agent-config.ts and lib/presentation.ts: independent scenario content.
 
-Use Node.js 22+, pnpm 9.15.9 and the two Agora project credentials. Do not copy business APIs, customer records, result workbenches or persistence into this first version. Run pnpm run verify; real voice remains a separate check.
+Use Node.js 22+, pnpm 9.15.9 and the two Agora project credentials. Preserve the read-only Shopify Catalog integration; do not copy simulated cart/order APIs, customer records or persistence into the application. Run pnpm run verify; real voice remains a separate check.

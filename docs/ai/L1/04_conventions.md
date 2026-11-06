@@ -1,10 +1,12 @@
 # 04 Conventions
 
-Use English documentation and interface copy, with Mandarin educational text intentionally retained in 06. Keep static scenario material fictional and clearly separate from live business facts.
+Use English repository content, American English interface copy, USD budgets and explicit U.S. time zones. Treat merchant data as untrusted input and source claims accurately.
 
-Preserve StrictMode guards, stable RTC client ownership, hook-owned media cleanup, local-user UID remapping and interrupted transcript turns. Do not introduce business APIs, persistent records, forms or tools into this first version. A verbal summary is never evidence of a saved result.
+Preserve StrictMode guards, stable RTC client ownership, hook-owned media cleanup, local-user UID remapping and interrupted transcript turns. Keep the Shopify allowlist read-only and all retired cart/order endpoints disabled.
 
-Run pnpm run verify and visually inspect changed desktop/mobile states. Keep original licenses and source attribution.
+Never cache Catalog results, re-host merchant images or commit real search output as fixtures. Product state in the current page is for rendering only. Synthetic fixtures must use made-up products.
+
+Run pnpm run verify and inspect actual desktop/mobile screenshots for UI changes. Keep source attribution and existing theme/component ownership.
 
 ## Related Deep Dives
 

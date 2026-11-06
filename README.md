@@ -1,79 +1,81 @@
 # Voice Shopping Assistant
 
-The previous business implementation is retained as inactive source for a later version. It is not exposed by the conversation Agent or used by voice startup; its HTTP routes return 410.
+Find real microphones and cameras from Shopify merchants, compare products against a USD budget, and continue to the merchant website.
 
-Compare illustrative microphones and cameras and talk through your preferences.
+## Scope
 
-## First-version scope
+This version supports live, read-only Shopify product discovery. Compare returned products against a USD budget and send buyers to merchant websites. No cart changes, order placement, payment collection, stock reservation, saved shopping history or cross-session business records are available. Keep credentials server-only and never claim a purchase, payment or shipment was completed.
 
-This first version is conversation-only. No business data lookup, external tools, database, record writes, saved results, or cross-session business history are available. Keep user-provided details only in the current conversation. Never claim an order, appointment, registration, feedback submission, callback, payment, shipment or other external action was created, saved or completed. Offer a verbal summary and explain the appropriate human next step instead. Do not request passwords, verification codes, payment details or unnecessary personal identifiers.
-
-The application exposes only the token, Agent invite, stop and optional custom-LLM proxy routes. Business APIs are disabled and return HTTP 410; customer records, result stores and data workbenches are not used by the first version. Static public reference material is part of the prompt; it is not queried as a business service.
+The voice Agent uses Shopify Global Catalog MCP directly. The page also offers an independent product browser with search, budget filtering, variant details and merchant links. During a live conversation, Discuss by voice hands the selected product to the assistant for a fresh lookup. Retired simulated cart/order/session APIs remain disabled with HTTP 410.
 
 ## Run it
 
-Use Node.js 22+ and pnpm 9.15.9. Install with pnpm install --frozen-lockfile. Copy env.local.example to .env.local only when absent and fill the required values. Never overwrite an existing environment file.
+Use Node.js 24 (see .nvmrc) and pnpm 9.15.9. Install with pnpm install --frozen-lockfile. Copy env.local.example to .env.local only when absent and fill the existing required values; never overwrite credentials.
 
 | Variable | Required | Exposure |
 | --- | --- | --- |
-| `NEXT_PUBLIC_AGORA_APP_ID` | Yes | Public; build and runtime |
-| `NEXT_AGORA_APP_CERTIFICATE` | Yes | Server runtime only |
+| NEXT_PUBLIC_AGORA_APP_ID | Yes | Public; build and runtime |
+| NEXT_AGORA_APP_CERTIFICATE | Yes | Server runtime only |
+| SHOPIFY_CATALOG_ACCESS_TOKEN | No for local trial | Server runtime only |
+| SHOPIFY_UCP_AGENT_PROFILE_URL | No for local trial | Public HTTPS profile URL |
+
+Run:
 
 ~~~bash
 pnpm run doctor
 pnpm run dev
 ~~~
 
-Open http://localhost:3000. The page opens directly with an inline welcome and persistent scenario header, without an introductory dialog. Starting voice requires the user to choose `Start voice shopping` and grant microphone permission.
+Open http://localhost:3000. The page opens directly without an introductory dialog. Use Search products without a microphone, or choose Start voice shopping and grant microphone permission. Loading the page starts neither a session nor a Catalog query.
 
-With a ready Agora CLI, the optional template-aware environment command is `agora quickstart env write . --template nextjs --project <your-project> --json`. Check CLI readiness before any configuration operation.
+An anonymous trial uses [Shopify's hosted example UCP profile](https://shopify.dev/ucp/agent-profiles/examples/2026-08-25/valid-with-capabilities.json). For production, use an owned public profile and Catalog credentials according to [Shopify authentication](https://shopify.dev/docs/agents/get-started/authentication). Bearer tokens expire and need renewal; this local demo does not implement a credential-issuance service.
 
-## Conversation
+With a ready Agora CLI, the optional environment command is agora quickstart env write . --template nextjs --project <your-project> --json. Check CLI readiness before configuration.
 
-- I need a USB microphone for video calls under 150 dollars.
-- Compare a desk camera with a studio camera for recording.
+## Try it
 
-Use the microphone, transcript and End conversation controls. Ask for a recap before ending; End conversation stops the session and does not request another model response. Inspector reflects current-call evidence and manually selected outcomes, not saved business results.
+- Search USB microphone with a USD 150 budget, open View details and follow a merchant product link.
+- Say: I need a USB microphone for video calls under 150 dollars.
+- Say: Find a webcam for recording and compare two options within my budget.
+- During a live session, open product details and choose Discuss by voice. The assistant checks that selected product/variant through Shopify.
+- Ask for a recap before ending. End conversation stops the session.
+
+The voice and page searches are independent; a spoken search does not automatically replace visible product cards.
 
 ## Commands
 
-- pnpm run doctor: check the local environment without printing secrets.
-- pnpm run dev: start the local app.
-- pnpm run verify: canonical repository, lint, types, mocked API, conversation-only, activity, Inspector, scenario and build checks.
+- pnpm run doctor: checks local setup without printing secrets.
+- pnpm run dev: starts the local application.
+- pnpm run verify: canonical repository, lint, types, mocked Agora APIs, read-only startup, synthetic Shopify HTTP boundaries, transcript/Inspector, prompt and build checks.
+- pnpm run verify:shopify: exercises the real HTTP client against a synthetic local upstream, including empty results, malformed replies, rate limits and timeout.
 - pnpm run build and pnpm run start: native production build and server.
 - pnpm run verify:docker: separate container build/startup/token checks.
 
 ## Deployment
 
-The browser uses Agora RTC for audio and RTM for transcript and Agent events. Next.js only signs credentials and starts/stops the managed Agent. No business session, data API, local file store or persistent application database is required. Native Node.js, Docker and a Next.js-compatible serverless deployment use the same conversation flow. Actual hosted voice acceptance remains a separate check.
+The browser uses Agora RTC for audio and RTM for transcript and Agent events. The managed Agent connects directly to Shopify Global Catalog MCP with only search and product-detail HTTP adapters. Next.js signs Agora credentials, starts/stops the Agent and proxies fresh Catalog queries for the on-page product browser. No public callback tunnel, database, result store or application-managed cart is needed.
 
-Provide NEXT_PUBLIC_AGORA_APP_ID during the client build and at runtime. Keep NEXT_AGORA_APP_CERTIFICATE in server-only runtime configuration. No business callback origin, database, writable application volume or business session is needed.
-
-### Docker
+Provide NEXT_PUBLIC_AGORA_APP_ID during the client build and at runtime. Keep NEXT_AGORA_APP_CERTIFICATE and any Catalog token server-only. The host needs outbound HTTPS to Shopify and Agora; no public tool callback origin or writable business volume is required.
 
 ~~~bash
 docker build --build-arg NEXT_PUBLIC_AGORA_APP_ID=<public-app-id> -t agora-scenario/10-voice-shopping .
 docker run --rm -p 3000:3000 --env-file .env.local agora-scenario/10-voice-shopping
 ~~~
 
-The image runs as a non-root user. Build and runtime App IDs must match. Do not place the certificate in a build argument. Docker and real hosted voice acceptance are separate from local verification.
+The image runs as a non-root user. Docker, public hosting and actual two-way speech acceptance remain separate checks.
+
+## Limits and source handling
+
+Anonymous Shopify access has shared/IP limits and is intended for trials. Public production traffic needs Catalog credentials; [authenticated Global Catalog requests default to five requests per second](https://shopify.dev/docs/agents/profiles/auth-and-rate-limiting). Rate limits and provider errors are surfaced explicitly.
+
+Catalog routes and fetches use no-store. Do not cache search results, copy live listings into test fixtures, or download/re-host merchant images. The page renders original image URLs. Some descriptions and attributes are inferred by Shopify; verify exact compatibility on the merchant page. Missing prices and availability remain unknown. Final tax, shipping and totals are confirmed by the merchant.
+
+Transcript, Inspector and product display state live in page memory and disappear on refresh. This does not define external provider retention. Sample endpoints are not production access/abuse controls.
 
 ## Architecture and customization
 
-See [architecture](ARCHITECTURE.md), [the public recipe](RECIPE.md), [the internal contract](docs/ai/RECIPE.md) and [the scenario guide](docs/scenario/README.md). Edit lib/agent-config.ts for behavior, lib/presentation.ts for copy and lib/runtime-profile.ts for the non-secret provider settings.
-
-## Limits and security
-
-No business data is queried or saved by this application. Current-call transcript and Inspector state are held in the page and disappear on refresh. This does not describe the retention policies of external voice/model providers. Sample token/start/stop endpoints are not production login or abuse controls; configure appropriate public-demo access and usage limits before a public release.
-
-Keep certificates and any optional custom-LLM credentials server-only. Report security issues privately to security@agora.io. Real speech, model quality and public hosting have not been established by mocked checks.
+See [architecture](ARCHITECTURE.md), [the public recipe](RECIPE.md), [the internal contract](docs/ai/RECIPE.md) and [the scenario guide](docs/scenario/README.md). Edit lib/agent-config.ts for voice behavior, lib/agent-tools.ts for the MCP allowlist, lib/shopify-catalog.ts for page data, lib/presentation.ts for copy and lib/runtime-profile.ts for providers.
 
 ## Attribution
 
-Derived from [the official Agora Next.js voice quickstart](https://github.com/AgoraIO-Conversational-AI/agent-quickstart-nextjs). Retain [the license](LICENSE) and [third-party notices](THIRD_PARTY_NOTICES.md).
-
-## Prompt guidance update — 2026-11-05
-
-The scenario now includes task-specific follow-ups, grounded recommendations and a business-local date calendar. Public reference material lives in `lib/scenario-knowledge.ts`; conversation/date rules live in `lib/prompt-context.ts`. Configured scenario reference, explicitly separate from live business records. No business tool or record-saving capability is enabled.
-
-See [the updated scenario guide](docs/scenario/README.md) and [multi-turn acceptance cases](docs/scenario/acceptance.md). `pnpm run verify` covers local contracts, calendar regressions and build checks; actual model and voice quality require separate real conversations.
+Derived from [the official Agora Next.js voice quickstart](https://github.com/AgoraIO-Conversational-AI/agent-quickstart-nextjs). Retain [the license](LICENSE) and [third-party notices](THIRD_PARTY_NOTICES.md). Product data comes from [Shopify Global Catalog](https://shopify.dev/docs/agents/catalog/global-catalog).

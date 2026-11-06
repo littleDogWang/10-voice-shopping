@@ -4,33 +4,34 @@ export type { ScenarioPresentation } from '@/types/presentation';
 export const presentation: ScenarioPresentation = {
   "id": "10-voice-shopping",
   "name": "Voice Shopping Assistant",
-  "purpose": "Scenario voice conversation",
+  "purpose": "Find microphones and cameras from real stores",
   "headline": [
     "Find your next setup."
   ],
-  "summary": "Compare illustrative microphones and cameras and talk through your preferences.",
+  "summary": "Find real microphones and cameras, compare options for your budget, and continue to the store when you are ready.",
   "featuresHeading": "In this conversation",
   "features": [
     {
       "emoji": "💬",
-      "title": "Product needs discussion"
+      "title": "Live product discovery"
     },
     {
       "emoji": "🎙️",
-      "title": "Illustrative product comparison"
+      "title": "Budget-aware comparisons"
     },
     {
       "emoji": "📝",
-      "title": "Verbal recommendation recap"
+      "title": "Merchant product links"
     }
   ],
   "builtWith": [
     "Agora Conversational AI",
     "Agents SDK",
-    "Next.js"
+    "Next.js",
+    "Shopify Catalog"
   ],
   "startLabel": "Start voice shopping",
-  "boundaryShort": "Conversation only. No inventory lookup, basket, orders, payments or saved shopping history.",
+  "boundaryShort": "Live product discovery. Complete any purchase on the merchant website.",
   "outcomes": [
     {
       "id": "helpful",
@@ -45,7 +46,7 @@ export const presentation: ScenarioPresentation = {
     "sourceUrl": "https://github.com/littleDogWang/10-voice-shopping",
     "runCommand": "pnpm install --frozen-lockfile\npnpm run doctor\npnpm run dev",
     "skillsCommand": "npx skills add github:AgoraIO/skills",
-    "assistantPrompt": "Work in this existing 10-voice-shopping voice demo. Preserve Agora RTC/RTM lifecycle and the conversation-only first-version boundary. Adapt the assistant instructions and static public background without adding business tools, records, data APIs or persistence.",
+    "assistantPrompt": "Work in this existing 10-voice-shopping voice demo. Preserve Agora RTC/RTM lifecycle and read-only Shopify Catalog MCP tools. Keep product queries uncached, render merchant images from their original URLs, and send buyers to merchant websites. Preserve disabled simulated cart/order routes and do not add persistence or payment collection.",
     "docsUrl": "https://docs.agora.io/en/ai/build/build-server-client",
     "sdkUrl": "https://www.npmjs.com/package/agora-agents",
     "consoleUrl": "https://console.agora.io/",
@@ -55,6 +56,10 @@ export const presentation: ScenarioPresentation = {
       {
         "title": "Change the conversation",
         "path": "lib/agent-config.ts"
+      },
+      {
+        "title": "Configure Shopify Catalog",
+        "path": "lib/shopify-config.ts"
       },
       {
         "title": "Choose models and voice",

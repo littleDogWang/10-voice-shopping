@@ -5,6 +5,7 @@
 @import '../styles/agent-ui/theme.css';
 @import '../styles/agent-ui/website-theme.css';
 @import '../styles/shopping.css';
+@import '../styles/catalog.css';
 @source "../node_modules/agora-agent-uikit/dist";
 
 :root {
@@ -659,6 +660,7 @@ button:disabled {
 }
 .demo-welcome-actions {
   display: flex;
+  gap: 12px;
   justify-content: flex-start;
   margin: 24px 0 10px;
 }

@@ -5,13 +5,13 @@
 | Repo | littleDogWang/10-voice-shopping |
 | Type | Next.js 16 / React 19 / TypeScript voice application |
 | Deploy Target | Native Node.js, Docker or Next.js-compatible serverless host; no business storage |
-| Last Reviewed | 2026-11-05 |
-| Recipe Version | 0.3.0 |
+| Last Reviewed | 2026-11-06 |
+| Recipe Version | 0.4.0 |
 | Recipe Status | draft; local checks do not establish public availability |
 
-Compare illustrative microphones and cameras and talk through your preferences.
+Find real microphones and cameras through Shopify Global Catalog.
 
-This first version is conversation-only. No business data lookup, external tools, database, record writes, saved results, or cross-session business history are available. Keep user-provided details only in the current conversation. Never claim an order, appointment, registration, feedback submission, callback, payment, shipment or other external action was created, saved or completed. Offer a verbal summary and explain the appropriate human next step instead. Do not request passwords, verification codes, payment details or unnecessary personal identifiers.
+This version supports live, read-only Shopify product discovery. Compare returned products against a USD budget and send buyers to merchant websites. No cart changes, order placement, payment collection, stock reservation, saved shopping history or cross-session business records are available. Keep credentials server-only and never claim a purchase, payment or shipment was completed.
 
 ## L1 — Summaries
 

@@ -1,28 +1,22 @@
 # 05 Workflows
 
-## First success
+## Run locally
 
-Install dependencies, configure the two Agora values in .env.local, run pnpm run doctor and pnpm run dev, and choose the scenario start action. No business session is required.
+Configure the two Agora values in .env.local, run pnpm run doctor and pnpm run dev, then browse products or start voice shopping. Anonymous Catalog access supports local trial without a Shopify key; upstream rate limits still apply.
 
-## Change behavior
+## Change shopping behavior
 
-Edit lib/agent-config.ts for the conversation and lib/presentation.ts for visible copy. Run pnpm run verify and real speech acceptance for prompt/provider changes.
+Edit lib/agent-config.ts for the voice workflow and lib/scenario-knowledge.ts for source guidance. Keep exact product facts in fresh tool results. Edit lib/shopify-catalog.ts for page normalization, and lib/agent-tools.ts for the read-only allowlist.
+
+## Verify
+
+Run pnpm run verify for local contracts, synthetic upstream checks, lint, types and build. Separately check real Catalog search/detail responses through the running app. Exercise actual speech, product-tool use, selected-product handoff, interruption and clean stop before claiming live voice acceptance.
 
 ## Deploy
 
-The browser uses Agora RTC for audio and RTM for transcript and Agent events. Next.js only signs credentials and starts/stops the managed Agent. No business session, data API, local file store or persistent application database is required. Native Node.js, Docker and a Next.js-compatible serverless deployment use the same conversation flow. Actual hosted voice acceptance remains a separate check.
+The browser uses Agora RTC for audio and RTM for transcript and Agent events. The managed Agent connects directly to Shopify Global Catalog MCP with only search, lookup and product-detail tools. Next.js signs Agora credentials, starts/stops the Agent and proxies fresh Catalog queries for the on-page product browser. No public callback tunnel, database, result store or application-managed cart is needed.
 
-Read [the deployment guide](../../../README.md#deployment). Supply the public App ID at build and runtime; keep the certificate server-only. Docker checks and hosted speech are separate.
-
-## Diagnose
-
-Inspect the actual failing token, Agent, RTC or RTM response. Report setup, transport and provider failures directly; never present synthetic checks as real speech acceptance.
-
-## Improve prompt-based guidance
-
-Edit `lib/agent-config.ts` and `lib/scenario-knowledge.ts` together. Keep business facts grounded in the configured reference; do not treat a date calendar as live availability. `lib/prompt-context.ts` provides current business-local date context without adding an API, provider setting or business session.
-
-Synchronize the scenario guide and acceptance cases. Run `pnpm run verify`; its date-context regressions check UTC/local-date boundaries, daylight saving and month/year transitions. Verify actual model responses and speech separately before claiming conversational acceptance.
+Follow [deployment guidance](../../../README.md#deployment). Supply the public App ID at build/runtime. Keep certificates and Catalog bearer tokens server-only; obtain/renew Shopify tokens according to Shopify's authentication guide. Public deployment and Docker acceptance are separate from local checks.
 
 ## Related Deep Dives
 

@@ -2,33 +2,21 @@
 
 ## 1. Overview
 
-Compare illustrative microphones and cameras and talk through your preferences. This first version is conversation-only. No business data lookup, external tools, database, record writes, saved results, or cross-session business history are available. Keep user-provided details only in the current conversation. Never claim an order, appointment, registration, feedback submission, callback, payment, shipment or other external action was created, saved or completed. Offer a verbal summary and explain the appropriate human next step instead. Do not request passwords, verification codes, payment details or unnecessary personal identifiers.
+Find real microphones and cameras through Shopify Global Catalog and discuss the trade-offs by voice. This version supports live, read-only Shopify product discovery. Compare returned products against a USD budget and send buyers to merchant websites. No cart changes, order placement, payment collection, stock reservation, saved shopping history or cross-session business records are available. Keep credentials server-only and never claim a purchase, payment or shipment was completed.
 
 ## 2. Try the Demo
 
-Run the app using [local setup](README.md#run-it). Choose `Start voice shopping`, allow microphone access and try:
-
-- I need a USB microphone for video calls under 150 dollars.
-- Compare a desk camera with a studio camera for recording.
-
-Ask for a verbal recap before ending. Only the current page retains the transcript and session diagnostics; no business record is created.
+Follow [local setup](README.md#run-it). Search USB microphone with a USD 150 budget, or start voice shopping and describe your needs. Open a returned product to inspect current variant information and merchant links. During a live conversation, Discuss by voice asks the assistant to inspect that selected item.
 
 ## 3. Architecture & Tech Stack
 
-The browser uses Agora RTC for audio and RTM for transcript and Agent events. Next.js only signs credentials and starts/stops the managed Agent. No business session, data API, local file store or persistent application database is required. Native Node.js, Docker and a Next.js-compatible serverless deployment use the same conversation flow. Actual hosted voice acceptance remains a separate check.
+The browser uses Agora RTC for audio and RTM for transcript and Agent events. The managed Agent connects directly to Shopify Global Catalog MCP with only search and product-detail HTTP adapters. Next.js signs Agora credentials, starts/stops the Agent and proxies fresh Catalog queries for the on-page product browser. No public callback tunnel, database, result store or application-managed cart is needed.
 
-Next.js 16, React 19, TypeScript, agora-agents, Agora RTC/RTM and the adopted agent-ui components provide the existing voice lifecycle.
+The existing Next.js 16, React 19, TypeScript, agora-agents, Agora RTC/RTM and adopted agent-ui components remain in use.
 
 ## 4. Prerequisites & Configuration
 
-Use Node.js 22+, pnpm 9.15.9 and an Agora project with RTC, Signaling and Conversational AI. Configure `env.local.example` in `.env.local`.
-
-| Variable | Required | Exposure |
-| --- | --- | --- |
-| `NEXT_PUBLIC_AGORA_APP_ID` | Yes | Public; build and runtime |
-| `NEXT_AGORA_APP_CERTIFICATE` | Yes | Server runtime only |
-
-The default managed pipeline needs no vendor key. Business-tool origins and business-storage variables are not used.
+Use Node.js 24 and pnpm 9.15.9. Preserve .env.local and configure NEXT_PUBLIC_AGORA_APP_ID and server-only NEXT_AGORA_APP_CERTIFICATE. Anonymous Shopify local trials need no key; optional SHOPIFY_CATALOG_ACCESS_TOKEN and SHOPIFY_UCP_AGENT_PROFILE_URL are documented in env.local.example. Production needs an owned UCP profile and appropriate Catalog credentials.
 
 ## 5. Quick Start
 
@@ -38,20 +26,16 @@ pnpm run doctor
 pnpm run dev
 ~~~
 
-Create .env.local from env.local.example only when absent, fill the two required values, and open http://localhost:3000. Keep existing credentials when reusing a checkout.
+Open http://localhost:3000. Product search works independently of microphone/session startup. The page requests microphone access only after the voice start action.
 
 ## 6. How It Works
 
-The start action requests a combined RTC/RTM token and starts the managed Agent with only requester_id and channel_name. The assistant follows lib/agent-config.ts. No business session is created before voice startup, and legacy tool environment variables cannot enable business operations.
-
-See [the scenario guide](docs/scenario/README.md) for the conversation boundary and [acceptance cases](docs/scenario/acceptance.md) for checks.
+The Agent connects to Shopify's official Global Catalog MCP with a read-only allowlist. The page uses independent no-store search/detail routes. The existing RTM sendText method hands selected products to a live conversation. Legacy simulated cart/order APIs remain disabled.
 
 ## 7. Customize for Your Business
 
-Edit lib/agent-config.ts for the role, workflow, greeting and static public reference material. Edit lib/presentation.ts for the scenario entry and visible identity. Keep lib/runtime-profile.ts aligned with the invite route. Adding business integrations is outside this first version.
+Edit lib/agent-config.ts for conversation flow, lib/agent-tools.ts for the HTTP-to-MCP allowlist, lib/shopify-config.ts for the profile/token and lib/shopify-catalog.ts for page normalization. Keep product data fresh, merchant images direct, USD minor units correct and purchase completion on merchant websites.
 
 ## 8. Deployment & Validation
 
-Follow [deployment instructions](README.md#deployment). Run pnpm run verify; run pnpm run verify:docker separately when checking the container. Supply the public App ID at build and runtime and keep the App Certificate server-only.
-
-Mocked startup and build checks do not establish real speech quality or hosted connectivity. Verify actual two-way speech, transcript, interruptions, error handling and clean stop with real project credentials.
+Follow [deployment instructions](README.md#deployment). Run pnpm run verify; run pnpm run verify:docker separately. Mocked Agora checks and synthetic Shopify HTTP tests do not prove actual speech or hosting. Validate real Catalog requests, desktop/mobile UI, real tool-backed conversations, interruption and clean stop separately.

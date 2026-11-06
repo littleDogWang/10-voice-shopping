@@ -81,6 +81,7 @@ export function QuickstartPreCallCard({
           )}
           {isLoading ? 'Connecting…' : scenario.startLabel}
         </Button>
+        <Button size="lg" variant="outline" asChild><a href="#products">Browse products</a></Button>
       </div>
       <p className="demo-note">Microphone access required.</p>
       <p className="demo-note">{scenario.boundaryShort}</p>

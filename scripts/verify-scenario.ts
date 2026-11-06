@@ -7,8 +7,11 @@ assert.equal(config.id, "10-voice-shopping");
 assert.equal(getScenarioPresentation().id, config.id);
 for (const key of ['role', 'workflow', 'guardrails', 'greeting'] as const) assert.ok(config[key]);
 assert.match(getScenarioPrompt(), /# Goal and conversation flow/);
-assert.match(getScenarioPrompt(), /# First-version boundary/);
-assert.match(getScenarioPrompt(), /No business data lookup/);
+assert.match(getScenarioPrompt(), /# Read-only shopping boundary/);
+assert.match(getScenarioPrompt(), /No cart changes, order placement/);
+assert.match(getScenarioPrompt(), /minor-unit USD prices/);
+assert.match(getScenarioPrompt(), /maxPriceCents/);
+assert.doesNotMatch(getScenarioPrompt(), /Agora Mini Mic|Agora Studio Mic|Agora Desk Camera/);
 assert.doesNotMatch(getScenarioPrompt(), /AG-100[123]|patient-alex|AST-R3001|travelerKey|participantId/);
 console.log('Scenario conversation contract passed: ' + config.id);
 

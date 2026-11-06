@@ -1,16 +1,12 @@
 # 01 Setup
 
-Use Node.js 22+ and pnpm 9.15.9. Install with pnpm install --frozen-lockfile. Copy env.local.example to .env.local only when absent; preserve existing credentials.
+Use Node.js 24 (the repository's .nvmrc), pnpm 9.15.9 and the existing lockfile. Install with pnpm install --frozen-lockfile. Copy env.local.example to .env.local only when absent; preserve existing credentials.
 
-| Variable | Required | Exposure |
-| --- | --- | --- |
-| `NEXT_PUBLIC_AGORA_APP_ID` | Yes | Public; build and runtime |
-| `NEXT_AGORA_APP_CERTIFICATE` | Yes | Server runtime only |
+Required: NEXT_PUBLIC_AGORA_APP_ID at build/runtime and server-only NEXT_AGORA_APP_CERTIFICATE. Optional: server-only SHOPIFY_CATALOG_ACCESS_TOKEN and SHOPIFY_UCP_AGENT_PROFILE_URL. Anonymous local trials use Shopify's hosted example profile; production needs an owned public HTTPS profile and appropriate Catalog credentials.
 
+Run pnpm run doctor and pnpm run dev. Shopify is called on demand; loading the page does not request a microphone or query products. No business callback origin or application storage is needed. The optional ready-CLI environment command is agora quickstart env write . --template nextjs --project <your-project> --json.
 
-Run pnpm run doctor and pnpm run dev. No business-tool origin or storage configuration is used. The optional ready-CLI command is `agora quickstart env write . --template nextjs --project <your-project> --json`.
-
-Run pnpm run verify; run pnpm run verify:docker separately. Real speech needs a configured Agora project, microphone permission and real acceptance.
+Run pnpm run verify; Docker and actual hosted speech remain separate checks.
 
 ## Related Deep Dives
 

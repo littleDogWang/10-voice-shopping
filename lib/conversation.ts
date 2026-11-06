@@ -50,10 +50,14 @@ export function normalizeTranscript(
 ) {
   return transcript.map((item) => {
     const remappedUID = item.uid === '0' ? localUID : item.uid;
+    // Product-button actions carry an exact lookup ID for the Agent, separate from their readable label.
+    const displayText = typeof item.text === 'string' && remappedUID === localUID
+      ? item.text.replace(/\s*\[Catalog context: gid:\/\/shopify\/(?:p|Product|ProductVariant)\/[A-Za-z0-9_-]+\]\s*$/, '')
+      : item.text;
     const normalizedText =
-      typeof item.text === 'string'
-        ? normalizeTranscriptSpacing(item.text)
-        : item.text;
+      typeof displayText === 'string'
+        ? normalizeTranscriptSpacing(displayText)
+        : displayText;
     return { ...item, uid: remappedUID, text: normalizedText };
   });
 }

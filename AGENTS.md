@@ -24,11 +24,11 @@ Use a United States setting for fictional business examples, UI copy, Agent cont
 Use English for repository content, including documentation, code comments, UI copy and examples. Keep future additions and edits free of Chinese text.
 
 
-## First-version scope
+## Shopping scope
 
-Compare illustrative microphones and cameras and talk through your preferences.
+Find real microphones and cameras through live, read-only Shopify Catalog queries.
 
-This first version is conversation-only. No business data lookup, external tools, database, record writes, saved results, or cross-session business history are available. Keep user-provided details only in the current conversation. Never claim an order, appointment, registration, feedback submission, callback, payment, shipment or other external action was created, saved or completed. Offer a verbal summary and explain the appropriate human next step instead. Do not request passwords, verification codes, payment details or unnecessary personal identifiers.
+This version supports live, read-only Shopify product discovery. Compare returned products against a USD budget and send buyers to merchant websites. No cart changes, order placement, payment collection, stock reservation, saved shopping history or cross-session business records are available. Keep credentials server-only and never claim a purchase, payment or shipment was completed.
 
 
 ## How to Load
@@ -64,7 +64,7 @@ The sections below (Start Here, Patterns, Anti-Patterns, etc.) remain the canoni
 
 ## Supported Modes
 
-The browser uses Agora RTC for audio and RTM for transcript and Agent events. Next.js only signs credentials and starts/stops the managed Agent. No business session, data API, local file store or persistent application database is required. Native Node.js, Docker and a Next.js-compatible serverless deployment use the same conversation flow. Actual hosted voice acceptance remains a separate check.
+The browser uses Agora RTC for audio and RTM for transcript and Agent events. The managed Agent connects directly to Shopify Global Catalog MCP with only search and product-detail HTTP adapters. Next.js signs Agora credentials, starts/stops the Agent and proxies fresh Catalog queries for the on-page product browser. No public callback tunnel, database, result store or application-managed cart is needed.
 
 Use Node.js 22+ and pnpm 9.15.9. Copy env.local.example to .env.local only when absent. Supply the public App ID at build and runtime and keep the App Certificate server-only. Run pnpm run verify:docker separately for container acceptance.
 
@@ -72,7 +72,7 @@ Use Node.js 22+ and pnpm 9.15.9. Copy env.local.example to .env.local only when 
 
 - UI and RTC/RTM client lifecycle live in `components`.
 - Browser-facing API routes live in `app/api`.
-- Constants, Agent configuration, empty tools, presentation and static reference material live in `lib`; this repo owns its complete implementation.
+- Constants, Agent configuration, read-only MCP connections, Catalog normalization, presentation and source guidance live in `lib`; this repo owns its complete implementation.
 - Types live in `types`; business documentation lives in `docs/scenario`. Do not reintroduce a root multi-scenario registry.
 - If a workflow, request contract, or ownership boundary changes, update `README.md`, `AGENTS.md`, and the relevant `docs/ai/` files in the same change.
 
@@ -93,6 +93,12 @@ Use Node.js 22+ and pnpm 9.15.9. Copy env.local.example to .env.local only when 
 - `scripts/verify-api-contracts.ts`: route contract verification.
 
 ## Patterns
+
+### Shopify Catalog
+
+The managed Agent uses HTTP-to-MCP with only SearchShopifyProducts and GetShopifyProduct. The page uses uncached /api/catalog/search and /api/catalog/product routes; lib/shopify-catalog.ts normalizes fresh replies. Do not cache Catalog responses or re-host images. Use synthetic products in tests. Optional SHOPIFY_CATALOG_ACCESS_TOKEN stays server-only, and SHOPIFY_UCP_AGENT_PROFILE_URL must be public HTTPS. Anonymous local trials use Shopify's hosted example profile.
+
+During a live conversation, Discuss by voice sends the selected identifier through the existing toolkit; voice and page searches otherwise remain independent.
 
 ### StrictMode Guard (`isReady`)
 
@@ -245,16 +251,16 @@ Before finishing a change:
 The generator and tester live in the [AgoraIO-Community/ai-devkit](https://github.com/AgoraIO-Community/ai-devkit) skill set. See the [progressive disclosure standard](https://github.com/AgoraIO-Community/ai-devkit/blob/main/docs/progressive-disclosure-standard.md) for the full specification.
 
 
-## Conversation-only first version
+## Read-only Shopify integration
 
-This first version is conversation-only. No business data lookup, external tools, database, record writes, saved results, or cross-session business history are available. Keep user-provided details only in the current conversation. Never claim an order, appointment, registration, feedback submission, callback, payment, shipment or other external action was created, saved or completed. Offer a verbal summary and explain the appropriate human next step instead. Do not request passwords, verification codes, payment details or unnecessary personal identifiers.
+This version supports live, read-only Shopify product discovery. Compare returned products against a USD budget and send buyers to merchant websites. No cart changes, order placement, payment collection, stock reservation, saved shopping history or cross-session business records are available. Keep credentials server-only and never claim a purchase, payment or shipment was completed.
 
 ## Scenario UI alignment
 
-The local `LandingPage` UI helpers compose the inline welcome, persistent identity, activity workspace, Inspector and Build panels around existing session bootstrap. `lib/presentation.ts` loads scenario-specific content. `ConversationComponent` reports actual activity/inspection events and uses the adopted transcript and Glass controls. No business forms, saved-result panels or data workbenches are included. Tailwind 4/PostCSS, theme recipes and MiSans match scenario 01. `lib/runtime-profile.ts` displays the non-secret configured pipeline; keep it aligned with the invite route. Never treat browser fixtures as live RTC/tool acceptance.
+The local `LandingPage` UI helpers compose the inline welcome, persistent identity, activity workspace, Inspector and Build panels around existing session bootstrap. `lib/presentation.ts` loads scenario-specific content. `ConversationComponent` reports actual activity/inspection events and uses the adopted transcript and Glass controls. The product browser supports fresh search, product details and merchant links. No application-managed cart, payment or saved-result workbench is included. Tailwind 4/PostCSS, theme recipes and MiSans match scenario 01. `lib/runtime-profile.ts` displays the non-secret configured pipeline; keep it aligned with the invite route. Never treat browser fixtures as live RTC/tool acceptance.
 
 ## Prompt behavior contract — 2026-11-05
 
-Keep `lib/agent-config.ts` as the prompt entry point. Use `lib/scenario-knowledge.ts` for public scenario material and `lib/prompt-context.ts` for concise conversation rules and business-local date/calendar context. Keep the source classification visible in the prompt: configured fictional business facts and static public references are not live customer records.
+Keep `lib/agent-config.ts` as the prompt entry point. Use `lib/scenario-knowledge.ts` for public scenario material and `lib/prompt-context.ts` for concise conversation rules and business-local date/calendar context. Keep the source classification visible in the prompt: source guidance is not a product listing. Product facts come from fresh Shopify responses; inferred fields are not verified manufacturer specifications.
 
-Answer supported questions and continue useful advice after identifying one unavailable action. Preserve one-question turns, corrected details, honest uncertainty and the conversation-only boundary. Do not reactivate retired business fixtures or tools while changing a prompt. Update the scenario guide and acceptance cases with behavior changes; run `pnpm run verify` and report real-model/voice acceptance separately.
+Answer supported questions and continue useful advice after identifying one unavailable action. Preserve one-question turns, corrected details, honest uncertainty and the read-only shopping boundary. Keep retired simulated cart/order fixtures and tools disabled. Only Shopify's read-only Catalog tools may be exposed. Update the scenario guide and acceptance cases with behavior changes; run `pnpm run verify` and report real-model/voice acceptance separately.

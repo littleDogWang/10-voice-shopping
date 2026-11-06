@@ -24,6 +24,8 @@ import {
   QuickstartPreCallCard,
 } from './QuickstartPreCallCard';
 import { ConversationWorkspace } from './ConversationWorkspace';
+import { ShopifyCatalog } from './ShopifyCatalog';
+import { DEFAULT_AGENT_UID } from '@/lib/agora';
 
 // Dynamically import the ConversationComponent with ssr disabled
 const ConversationComponent = dynamic(() => import('./ConversationComponent'), {
@@ -394,6 +396,16 @@ export default function LandingPage() {
           </p>
         )}
       </ConversationWorkspace>
+      <ShopifyCatalog onDiscuss={showConversation && agoraData?.agentId && inspection.lifecycle === 'live' && !ending && !agentJoinError ? async (id, label, budget) => {
+        const { AgoraVoiceAI, ChatMessageType, ChatMessagePriority } = await import('agora-agent-client-toolkit');
+        await AgoraVoiceAI.getInstance().sendText(String(DEFAULT_AGENT_UID), {
+          messageType: ChatMessageType.TEXT,
+          text: 'Tell me about ' + label + '.' + (budget ? ' My budget is USD ' + budget + '.' : '') +
+            '\n[Catalog context: ' + id + ']',
+          priority: ChatMessagePriority.INTERRUPTED,
+          responseInterruptable: true,
+        });
+      } : undefined} />
       <ScenarioInspector
         scenario={scenario}
         snapshot={inspection}

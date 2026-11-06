@@ -47,7 +47,6 @@ export async function POST(request: NextRequest) {
     // AgoraClient authenticates API calls to the Agora Conversational AI service.
     // area: change to Area.EU or Area.AP for European or Asia-Pacific deployments.
     const scenario = getScenarioConfig();
-    const scenarioTools = getScenarioTools();
     const client = new AgoraClient({
       area: Area.US,
       appId,
@@ -82,8 +81,8 @@ export async function POST(request: NextRequest) {
         },
       },
       // RTM is required for transcript events in the browser client.
-      // This first version never enables business tools.
-      advancedFeatures: { enable_rtm: true, enable_tools: false },
+      // Read-only HTTP tools call Shopify MCP and preserve its structuredContent-only replies.
+      advancedFeatures: { enable_rtm: true, enable_tools: true },
       // Required for browser RTM events:
       // - data_channel: 'rtm' enables RTM delivery path for state/metrics/errors
       // - enable_error_message emits AGENT_ERROR payloads
@@ -114,7 +113,7 @@ export async function POST(request: NextRequest) {
           greetingMessage: scenario.greeting,
           failureMessage: 'Please wait a moment.',
           maxHistory: 15,
-          tools: scenarioTools.length > 0 ? scenarioTools : undefined,
+          tools: getScenarioTools(),
           params: {
             max_tokens: 1024,
             temperature: 0.7,

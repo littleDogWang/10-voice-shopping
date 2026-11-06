@@ -1,9 +1,9 @@
 ---
-recipe_version: 0.3.0
+recipe_version: 0.4.0
 recipe_status: draft
 extension_points:
   - id: prompts.system
-    name: Scenario conversation and static public reference material
+    name: Source-aware shopping conversation and live read-only Catalog
   - id: pipeline.providers
     name: Managed speech, model, voice and turn detection
   - id: ui.conversation
@@ -13,24 +13,24 @@ invariants:
     summary: Preserve combined RTC/RTM privileges and server-only credentials
   - id: lifecycle.strict-mode
     summary: Preserve initialization guards and hook-owned cleanup
-  - id: scenario.conversation-only
-    summary: Do not add business sessions, tools, data routes or persistent business records
+  - id: scenario.read-only-shopping
+    summary: Only read-only Shopify Catalog tools; no application-managed cart, payment or persistent business records
 stable_contracts:
   - id: api.invite-agent
     summary: Only requester_id and channel_name are required for voice startup
   - id: verification.canonical
-    summary: pnpm run verify includes conversation-only regression checks
+    summary: pnpm run verify includes read-only startup and synthetic upstream HTTP checks
 ---
 
-# Conversation-Only Recipe Profile
+# Read-Only Shopping Recipe Profile
 
 Read [the public recipe](../../RECIPE.md) for Voice Shopping Assistant.
 
 ## Recipe Scope
 
-Compare illustrative microphones and cameras and talk through your preferences.
+Find real microphones and cameras through Shopify Global Catalog.
 
-This first version is conversation-only. No business data lookup, external tools, database, record writes, saved results, or cross-session business history are available. Keep user-provided details only in the current conversation. Never claim an order, appointment, registration, feedback submission, callback, payment, shipment or other external action was created, saved or completed. Offer a verbal summary and explain the appropriate human next step instead. Do not request passwords, verification codes, payment details or unnecessary personal identifiers.
+This version supports live, read-only Shopify product discovery. Compare returned products against a USD budget and send buyers to merchant websites. No cart changes, order placement, payment collection, stock reservation, saved shopping history or cross-session business records are available. Keep credentials server-only and never claim a purchase, payment or shipment was completed.
 
 ## Baseline Implementation Guidance
 
@@ -38,10 +38,10 @@ This independent scenario derives from the [official Agora Next.js voice quickst
 
 ## Extension Points
 
-- lib/agent-config.ts: role, greeting, workflow, guardrails and static public material.
+- lib/agent-config.ts: role, greeting, workflow, guardrails and source-aware product guidance.
 - lib/presentation.ts: inline welcome, visible identity and developer guidance.
-- lib/runtime-profile.ts and app/api/invite-agent/route.ts: existing speech/provider settings.
-- lib/agent-tools.ts: intentionally empty; no environment flag enables business tools.
+- lib/runtime-profile.ts and app/api/invite-agent/route.ts: existing speech/providers and HTTP-to-MCP connection.
+- lib/agent-tools.ts: read-only HTTP-to-MCP allowlist; legacy custom business tools stay empty.
 
 ## Invariants
 
@@ -54,12 +54,12 @@ Preserve StrictMode guards, hook-owned RTC and microphone cleanup, combined RTC/
 - POST /api/stop-conversation accepts agent_id; retain the existing idempotent stop behavior.
 - POST /api/chat/completions is an optional custom-LLM proxy and is not used by the default pipeline.
 - Existing app/api/scenarios endpoints return HTTP 410 without invoking business modules.
-- env.local.example documents the two required Agora values for .env.local.
+- env.local.example documents the two required Agora values and optional Shopify profile/bearer token for .env.local.
 - pnpm run verify is canonical; Docker and real voice acceptance remain separate.
 
 ## Deployment
 
-The browser uses Agora RTC for audio and RTM for transcript and Agent events. Next.js only signs credentials and starts/stops the managed Agent. No business session, data API, local file store or persistent application database is required. Native Node.js, Docker and a Next.js-compatible serverless deployment use the same conversation flow. Actual hosted voice acceptance remains a separate check.
+The browser uses Agora RTC for audio and RTM for transcript and Agent events. The managed Agent connects directly to Shopify Global Catalog MCP with only search and product-detail HTTP adapters. Next.js signs Agora credentials, starts/stops the Agent and proxies fresh Catalog queries for the on-page product browser. No public callback tunnel, database, result store or application-managed cart is needed.
 
 ## Consumer Onboarding Recipe
 

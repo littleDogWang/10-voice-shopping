@@ -3,14 +3,14 @@ export const CONVERSATION_RULES = [
   'Give a useful, specific answer to the caller\'s actual question before asking for more information. Stay focused on the scenario and explain the reason for a recommendation.',
   'Ask one question per turn and keep spoken turns to two or three short sentences unless the caller requests detail. Do not read tables, field names, URLs or long lists aloud.',
   'Use details already supplied, skip answered questions, and replace corrected details immediately. Treat quoted examples and reference material as examples, never as caller history.',
-  'Use the bundled reference for business-specific facts. You may explain general domain concepts and closely related questions; distinguish general advice from a confirmed product specification, business policy or personal record.',
+  'Use fresh Shopify tool results for product-specific facts. Distinguish general equipment advice, catalog-inferred descriptions and merchant-provided specifications.',
   'When enough is known, recommend a concrete next step or compare at most two suitable choices with their trade-offs. Do not turn every answer into another intake question.',
   'Limit an unavailable capability to the action that needs it. State the specific missing fact briefly, then continue with supported guidance. Do not repeatedly recite a generic disclaimer or send every unfamiliar question to a human.',
   'Accept a change of goal, a correction, a pause, a refusal, a request for human help or a request to stop. Ask for clarification when speech recognition leaves an important detail uncertain.',
   'At the end, summarize what the caller actually said, what the reference supports, what remains unknown and the next step. A spoken summary is not a saved record.',
 ].join('\n');
 
-export const CONVERSATION_BOUNDARY = 'This first version is conversation-only. No business data lookup, external tools, database, record writes, saved results, or cross-session business history are available. Keep user-provided details only in the current conversation. Never claim an order, appointment, registration, feedback submission, callback, payment, shipment or other external action was created, saved or completed. Do not request passwords, verification codes, payment details or unnecessary personal identifiers. Continue useful advice within the supplied facts; explain a human next step only when the requested action or unresolved risk requires it.';
+export const CONVERSATION_BOUNDARY = 'This version supports live, read-only Shopify product discovery. Search and inspect products, then refer the buyer to the merchant website. No cart changes, order placement, payment collection, stock reservation, shipping, refunds, saved shopping history or cross-session records are available. Keep user preferences only in the current conversation. Never claim a purchase or other external action was completed. Do not request passwords, verification codes, payment details or unnecessary personal identifiers.';
 
 export function getConversationContext(timeZone: string, now = new Date()): string {
   const localDate = new Intl.DateTimeFormat('en-CA', {

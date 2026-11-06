@@ -1,18 +1,16 @@
 # 07 Gotchas
 
-Use pnpm 9.15.9 with the committed lockfile. Configure the public App ID during both build and runtime; a runtime value cannot repair a client built with another ID.
+The old Shopify /api/mcp endpoint is removed. Use the Global Catalog /api/ucp/mcp endpoint and required UCP agent-profile argument. Do not substitute Shopify's developer-documentation MCP.
 
-The first version has no customer lookup or saved business outcome. Legacy tool origins cannot reactivate those features. Current-call transcript disappears on refresh. Static reference material is not live availability, a customer record or an external integration.
+Catalog money uses minor units. A USD amount of 5699 means $56.99. A hard USD budget must filter the selected available variant, not merely a parent price range. Missing price or availability remains unknown. Catalog-inferred specifications need merchant verification.
 
-Retain the combined token, StrictMode guard, RTM identity and interrupted turns. Builds, screenshots and mocked API tests do not establish successful audio or model quality.
+Anonymous access is rate limited by IP and a shared pool; it is for local trials, with no throughput guarantee. Surface 429 and Retry-After honestly. Results and merchant images must not be cached or copied into fixtures.
 
-Transcript visibility can reset the scroller while its viewport has zero height. Keep the last visible follow state and restore it through the existing scroller API when showing the conversation again. Preserve deliberate history reading; Scroll to end resumes following. Check hidden arrivals and streaming text in a rendered desktop/mobile fixture.
+Keep the combined token, StrictMode guard, RTM identity and interrupted turns. Browser fixtures and HTTP tests do not establish voice acceptance. The date calendar supplies dates, not stock or delivery promises.
 
-## Prompt facts and unavailable actions
+When hiding/showing a transcript, restore following only if it was previously active. Preserve history reading and Scroll to end behavior; verify streaming and hidden arrivals at desktop/mobile widths.
 
-The prompt can explain static policies and compare options while live lookup or writing is unavailable. Limit the boundary to that unavailable action, preserve useful guidance and avoid a generic referral as the whole answer. Never import retained private fixtures or stock into `lib/scenario-knowledge.ts`.
-
-Date context describes the business-local date and UTC offset at session startup; a long call crossing midnight does not automatically refresh the system prompt. The reference calendar supplies dates only. A fixed example event that has passed must not be presented as an upcoming live event.
+ConversationPanel keeps the last visible scroll position and controls the primitive's autoScroll state. Hiding disables primitive auto-scroll; showing restores either the saved history position or following, and Scroll to end explicitly resumes it. A display-only product-reference filter must not alter IDs, roles or streaming status.
 
 ## Related Deep Dives
 

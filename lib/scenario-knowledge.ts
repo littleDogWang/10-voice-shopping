@@ -1,98 +1,17 @@
-// Public reference only. Keep private records, live inventory and business actions out of this module.
+// Source guidance only. Never bundle live product results or merchant images.
 export const SCENARIO_KNOWLEDGE = {
-  "products": [
-    {
-      "name": "Agora Mini Mic",
-      "category": "microphone",
-      "price": 79,
-      "currency": "USD",
-      "attributes": [
-        "usb",
-        "portable",
-        "desk",
-        "calls"
-      ]
-    },
-    {
-      "name": "Agora Studio Mic",
-      "category": "microphone",
-      "price": 179,
-      "currency": "USD",
-      "attributes": [
-        "usb",
-        "noise reduction",
-        "headphone monitoring",
-        "recording"
-      ]
-    },
-    {
-      "name": "Agora Desk Mic",
-      "category": "microphone",
-      "price": 129,
-      "currency": "USD",
-      "attributes": [
-        "usb",
-        "noise reduction",
-        "desk"
-      ]
-    },
-    {
-      "name": "Agora Room Camera",
-      "category": "camera",
-      "price": 249,
-      "currency": "USD",
-      "attributes": [
-        "wide angle",
-        "room",
-        "usb"
-      ]
-    },
-    {
-      "name": "Agora Desk Camera",
-      "category": "camera",
-      "price": 99,
-      "currency": "USD",
-      "attributes": [
-        "usb",
-        "1080p",
-        "privacy shutter",
-        "desk",
-        "calls"
-      ]
-    },
-    {
-      "name": "Agora Studio Camera",
-      "category": "camera",
-      "price": 299,
-      "currency": "USD",
-      "attributes": [
-        "usb",
-        "4k",
-        "autofocus",
-        "recording"
-      ]
-    }
-  ],
-  "source": {
-    "kind": "Fictional product comparison reference",
-    "revision": "2026-11-05",
-    "scope": "Six example products, their listed attributes and illustrative USD prices only; no stock or final quote."
+  source: {
+    kind: 'Live Shopify Global Catalog, queried through read-only MCP tools',
+    documentation: 'https://shopify.dev/docs/agents/catalog/global-catalog',
+    revision: '2026-11-05',
   },
-  "timeZone": "America/New_York",
-  "comparisonGuide": {
-    "usb": "A connection family; actual connector, OS and device support must be checked in full specifications.",
-    "noiseReduction": "A listed feature, not a measured guarantee that background noise will disappear.",
-    "headphoneMonitoring": "Useful when hearing the microphone signal matters; listed only on the Studio Mic in this example.",
-    "cameraResolution": "1080p and 4K describe listed image resolution, not guaranteed call quality in every application.",
-    "autofocus": "Listed on the Studio Camera; no speed, tracking or low-light performance is specified.",
-    "wideAngle": "Listed for the Room Camera; no numeric angle or room-size coverage is specified."
+  timeZone: 'America/New_York',
+  market: { country: 'US', currency: 'USD', language: 'en-US' },
+  comparisonGuide: {
+    microphones: 'Ask about calls versus recording, noise, connection needs and budget. USB alone does not establish connector, phone or OS compatibility.',
+    cameras: 'Ask about calls versus recording, desk versus room use and budget. Resolution alone does not establish frame rate or low-light quality.',
+    prices: 'Prices use minor currency units: USD 5699 means USD 56.99. Tax, shipping and discounts remain unconfirmed.',
+    availability: 'Use the returned variant availability. Unknown availability is not in stock; in stock does not guarantee delivery.',
+    provenance: 'Catalog descriptions and technical attributes can be inferred. Do not present inferred attributes as independently verified manufacturer specifications.',
   },
-  "notProvided": [
-    "Connector subtype or adapters",
-    "Operating-system and phone compatibility",
-    "Microphone pattern, sample rate or bit depth",
-    "Camera frame rate or numeric field of view",
-    "Included accessories",
-    "Taxes, delivery fees, discounts or live stock"
-  ]
 } as const;

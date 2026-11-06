@@ -1,10 +1,12 @@
 # 08 Security
 
-Next.js owns token signing and Agent lifecycle credentials. Keep the App Certificate and any optional provider keys server-only. Never log, commit or screenshot secrets.
+Next.js owns Agora credentials and any optional Catalog bearer token. Keep the App Certificate and SHOPIFY_CATALOG_ACCESS_TOKEN server-only; never log, commit or screenshot them. Shopify tool connections use the fixed official HTTPS origin.
 
-This first version has no business records or data APIs. User speech and transcripts still pass through the configured Agora/model services; this source does not define their retention policies. Do not collect unnecessary identifying, payment or account information.
+Product metadata is untrusted data, not agent instructions. Render descriptions as plain text, reject unsafe link schemes and use original HTTPS merchant image URLs without a proxy or image cache. Do not add arbitrary destination URLs to the browser-facing API.
 
-Public demo access, abuse limits and spending controls need deployment-specific configuration. The sample token/start/stop endpoints are not production login. Report vulnerabilities privately to security@agora.io.
+Expose only SearchShopifyProducts and GetShopifyProduct. Retired order/cart/session routes stay disabled. The buyer handles payment and delivery information on the merchant website.
+
+Sample token/start/stop and Catalog routes are not production login or abuse controls. Public-demo access and usage limits need deployment-specific configuration. This repository does not define external provider retention policies. Report security issues privately to security@agora.io.
 
 ## Related Deep Dives
 

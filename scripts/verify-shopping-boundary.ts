@@ -5,8 +5,10 @@ import { pathToFileURL } from 'node:url';
 import { Agent } from 'agora-agents';
 import { NextRequest } from 'next/server';
 import { getScenarioTools } from '../lib/agent-tools';
+import { SHOPIFY_CATALOG_ENDPOINT, SHOPIFY_EXAMPLE_PROFILE } from '../lib/shopify-config';
 import { getScenarioConfig, getScenarioPrompt } from '../lib/agent-config';
 import { getScenarioPresentation } from '../lib/presentation';
+import { normalizeTranscript } from '../lib/conversation';
 
 function routeFiles(directory: string): string[] {
   if (!fs.existsSync(directory)) return [];
@@ -17,10 +19,33 @@ function routeFiles(directory: string): string[] {
 }
 
 async function main() {
+  const context = '\n[Catalog context: gid://shopify/ProductVariant/12345]';
+  const message = (uid: string, text: string) => ({ uid, text, turn_id: 1 }) as Parameters<typeof normalizeTranscript>[0][number];
+  const visible = normalizeTranscript([
+    message('0', 'Tell me about Example Mic. My budget is USD 150.' + context),
+    message('voice-user', 'Please compare two microphones.'),
+    message('agent', 'Agent text' + context),
+    message('voice-user', 'The product ID is gid://shopify/ProductVariant/12345.'),
+  ], 'voice-user');
+  assert.equal(visible[0].text, 'Tell me about Example Mic. My budget is USD 150.');
+  assert.equal(visible[0].uid, 'voice-user');
+  assert.equal(visible[1].text, 'Please compare two microphones.');
+  assert.equal(visible[2].text, 'Agent text' + context);
+  assert.equal(visible[3].text, 'The product ID is gid://shopify/ProductVariant/12345.');
   const config = getScenarioConfig();
   assert.equal(getScenarioPresentation().id, config.id);
-  assert.deepEqual(getScenarioTools(), []);
-  assert.match(getScenarioPrompt(), /conversation-only|No external tools/);
+  const tools = getScenarioTools();
+  assert.deepEqual(tools.map(tool => tool.function.name), ['SearchShopifyProducts', 'GetShopifyProduct']);
+  assert.match(getScenarioPrompt(), /live, read-only Shopify/);
+  assert.match(getScenarioPrompt(), /structuredContent/);
+  for (const tool of tools) {
+    assert.equal(tool.server.url, SHOPIFY_CATALOG_ENDPOINT);
+    assert.equal(tool.server.method, 'POST');
+    assert.equal(tool.server.headers?.Accept, 'application/json');
+    const body = tool.server.body as { params: { arguments: { meta: { 'ucp-agent': { profile: string } }; catalog: { context: { currency: string } } } } };
+    assert.equal(body.params.arguments.meta['ucp-agent'].profile, process.env.SHOPIFY_UCP_AGENT_PROFILE_URL || SHOPIFY_EXAMPLE_PROFILE);
+    assert.equal(body.params.arguments.catalog.context.currency, 'USD');
+  }
   for (const file of routeFiles(path.join(process.cwd(), 'app/api/scenarios'))) {
     const retired = await import(pathToFileURL(file).href);
     for (const method of ['GET', 'POST', 'PUT', 'PATCH', 'DELETE']) {
@@ -59,8 +84,9 @@ async function main() {
       assert.equal(result.agent_id, 'conversation-only-agent');
       const actual = captured as unknown as Agent;
       assert.equal(actual.advancedFeatures?.enable_rtm, true);
-      assert.equal(actual.advancedFeatures?.enable_tools, false);
-      assert.deepEqual(actual.llm?.tools ?? [], []);
+      assert.equal(actual.advancedFeatures?.enable_tools, true);
+      assert.deepEqual(actual.llm?.tools, getScenarioTools());
+      assert.deepEqual(actual.llm?.mcp_servers ?? [], [], 'Structured-content-only Shopify replies must not use the incompatible native MCP result validator.');
       assert.deepEqual((sessionOptions as { remoteUids: string[] }).remoteUids, ['voice-user']);
       assert.equal(actual.instructions, getScenarioPrompt(config.id));
     }
@@ -70,6 +96,6 @@ async function main() {
     if (originalOrigin === undefined) delete process.env.TOP_TEN_SCENARIO_TOOL_BASE_URL;
     else process.env.TOP_TEN_SCENARIO_TOOL_BASE_URL = originalOrigin;
   }
-  console.log('Conversation-only startup, disabled legacy tools and removed business routes passed: ' + config.id);
+  console.log('Read-only Shopify startup, disabled legacy writes and retired business routes passed: ' + config.id);
 }
 main().catch((error) => { console.error(error); process.exitCode = 1; });

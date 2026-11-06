@@ -1,21 +1,19 @@
 # 03 Code Map
 
-- components/LandingPage.tsx: voice entry, bootstrap, RTM, renewal, stop and current-call UI.
-- components/ConversationComponent.tsx: guarded RTC/toolkit integration and transcript.
-- lib/agent-config.ts: scenario role, workflow, greeting and static public reference material.
-- lib/agent-tools.ts: empty tool list.
-- lib/runtime-profile.ts: non-secret model and voice configuration.
-- app/api/generate-agora-token/route.ts, app/api/invite-agent/route.ts and app/api/stop-conversation/route.ts: voice lifecycle.
-- lib/chat-completions.ts: optional custom-LLM SSE proxy, not enabled by default.
-- scripts/verify-conversation-only.ts: startup without business state and rejection of legacy tool enablement.
-- docs/scenario/: conversation guide and acceptance.
-
-## Prompt reference ownership
-
-- `lib/scenario-knowledge.ts`: public scenario reference used by the prompt, without private business records or live inventory.
-- `lib/prompt-context.ts`: conversation quality rules, current local date/time zone/UTC offset and a 28-day date calendar.
-- `lib/agent-config.ts`: task flow, greeting, boundaries and assembly of those references.
-- `docs/scenario/acceptance.md`: multi-turn model/speech acceptance cases; these are separate from deterministic local verification.
+- components/LandingPage.tsx: unchanged voice bootstrap/teardown ownership and selected-product handoff to the current Agent.
+- components/ConversationComponent.tsx: guarded RTC/toolkit integration, transcript and media controls.
+- components/agent-ui/conversation-panel.tsx: controlled transcript following, last visible history position and explicit Scroll to end recovery.
+- lib/conversation.ts: role/turn normalization and display-only removal of generated Catalog lookup context from local-user product actions.
+- components/ShopifyCatalog.tsx and styles/catalog.css: explicit product search, result cards, fresh details, variant selection and merchant links.
+- lib/shopify-config.ts: fixed official Catalog endpoint, local example profile and optional server-only bearer header.
+- lib/shopify-catalog.ts and types/shopify.ts: MCP request/response handling, validation, USD budgets, missing-field handling and normalized page data.
+- lib/agent-tools.ts: read-only HTTP tool allowlist; retired custom cart/order tools remain empty.
+- lib/agent-config.ts: source-aware shopping prompt and source-aware product guidance.
+- lib/scenario-knowledge.ts and lib/prompt-context.ts: source guidance, conversation rules and U.S. date context, without cached listings.
+- app/api/catalog/search/route.ts and app/api/catalog/product/route.ts: no-store browser-facing lookups.
+- scripts/verify-shopping-boundary.ts: read-only Agent startup and disabled legacy writes.
+- scripts/verify-shopify.ts: actual HTTP requests to a synthetic local upstream, including rate limits, malformed replies and deadlines.
+- scripts/verify-api-contracts.ts: token/start/stop and optional custom-LLM route contracts.
 
 ## Related Deep Dives
 

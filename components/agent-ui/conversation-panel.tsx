@@ -1,6 +1,6 @@
 'use client';
 
-import { Fragment, useLayoutEffect, useRef, type ReactNode, type RefObject } from 'react';
+import { Fragment, useLayoutEffect, useRef, useState, type ReactNode, type RefObject } from 'react';
 
 import { Bubble, BubbleContent } from '@/components/ui/bubble';
 import {
@@ -46,18 +46,22 @@ function TranscriptScrollRestoration({
   hidden,
   messages,
   following,
+  viewport,
+  position,
 }: {
   hidden?: boolean;
   messages: TranscriptMessage[];
   following: RefObject<boolean>;
+  viewport: RefObject<HTMLDivElement | null>;
+  position: RefObject<number>;
 }) {
   const { scrollToEnd } = useMessageScroller();
 
   useLayoutEffect(() => {
-    if (!hidden && following.current) {
-      scrollToEnd({ behavior: 'auto' });
-    }
-  }, [hidden, messages, following, scrollToEnd]);
+    if (hidden) return;
+    if (following.current) scrollToEnd({ behavior: 'auto' });
+    else viewport.current?.scrollTo({ top: position.current, behavior: 'auto' });
+  }, [hidden, messages, following, viewport, position, scrollToEnd]);
 
   return null;
 }
@@ -75,6 +79,9 @@ export function ConversationPanel({
   // Layout changes may move scrollTop; only user input should pause following.
   const following = useRef(true);
   const userScrolling = useRef(false);
+  const viewport = useRef<HTMLDivElement>(null);
+  const position = useRef(0);
+  const [autoScroll, setAutoScroll] = useState(true);
   const displayedMessages: TranscriptMessage[] =
     messages.length === 0 && !agentRun
       ? [
@@ -101,35 +108,40 @@ export function ConversationPanel({
       data-voice-state={voiceState}
     >
       <div className="ag-transcript">
-        <MessageScrollerProvider autoScroll defaultScrollPosition="end">
-          <TranscriptScrollRestoration hidden={hidden} messages={displayedMessages} following={following} />
+        <MessageScrollerProvider autoScroll={!hidden && autoScroll} defaultScrollPosition="end">
+          <TranscriptScrollRestoration hidden={hidden} messages={displayedMessages} following={following} viewport={viewport} position={position} />
           <MessageScroller>
             <MessageScrollerViewport
+              ref={viewport}
               role="log"
               aria-label={`${name} live transcript`}
               aria-live="polite"
               tabIndex={0}
               onWheelCapture={(event) => {
                 userScrolling.current = true;
-                if (event.deltaY < 0) following.current = false;
+                if (event.deltaY < 0) { following.current = false; setAutoScroll(false); }
               }}
               onTouchMoveCapture={() => { userScrolling.current = true; }}
               onPointerDownCapture={() => { userScrolling.current = true; }}
               onKeyDownCapture={(event) => {
                 if (['ArrowUp', 'ArrowDown', 'PageUp', 'PageDown', 'Home', 'End', ' '].includes(event.key)) {
                   userScrolling.current = true;
-                  if (['ArrowUp', 'PageUp', 'Home'].includes(event.key) || (event.key === ' ' && event.shiftKey)) following.current = false;
+                  if (['ArrowUp', 'PageUp', 'Home'].includes(event.key) || (event.key === ' ' && event.shiftKey)) { following.current = false; setAutoScroll(false); }
                 }
               }}
               onScroll={(event) => {
                 const viewport = event.currentTarget;
                 if (!viewport.clientHeight) return;
+                const movingDown = viewport.scrollTop > position.current;
+                position.current = viewport.scrollTop;
                 const atEnd = viewport.scrollHeight - viewport.scrollTop - viewport.clientHeight <= 8;
-                if (atEnd) {
+                if (atEnd && (following.current || movingDown)) {
                   following.current = true;
                   userScrolling.current = false;
+                  setAutoScroll(true);
                 } else if (userScrolling.current) {
                   following.current = false;
+                  setAutoScroll(false);
                 }
               }}
             >
@@ -190,6 +202,7 @@ export function ConversationPanel({
             <MessageScrollerButton behavior="auto" onClick={() => {
               following.current = true;
               userScrolling.current = false;
+              setAutoScroll(true);
             }} />
           </MessageScroller>
         </MessageScrollerProvider>
