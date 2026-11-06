@@ -5,9 +5,6 @@ export const presentation: ScenarioPresentation = {
   "id": "10-voice-shopping",
   "name": "Voice Shopping Assistant",
   "purpose": "Find microphones and cameras from real stores",
-  "headline": [
-    "Find your next setup."
-  ],
   "summary": "Find real microphones and cameras, compare options for your budget, and continue to the store when you are ready.",
   "featuresHeading": "In this conversation",
   "features": [
@@ -46,7 +43,7 @@ export const presentation: ScenarioPresentation = {
     "sourceUrl": "https://github.com/littleDogWang/10-voice-shopping",
     "runCommand": "pnpm install --frozen-lockfile\npnpm run doctor\npnpm run dev",
     "skillsCommand": "npx skills add github:AgoraIO/skills",
-    "assistantPrompt": "Work in this existing 10-voice-shopping voice demo. Preserve Agora RTC/RTM lifecycle and read-only Shopify Catalog MCP tools. Keep product queries uncached, render merchant images from their original URLs, and send buyers to merchant websites. Preserve disabled simulated cart/order routes and do not add persistence or payment collection.",
+    "assistantPrompt": "Work in this existing Voice Shopping Assistant voice demo. Preserve Agora RTC/RTM lifecycle and read-only Shopify Catalog MCP tools. Keep product queries uncached, render merchant images from their original URLs, and send buyers to merchant websites. Preserve disabled simulated cart/order routes and do not add persistence or payment collection.",
     "docsUrl": "https://docs.agora.io/en/ai/build/build-server-client",
     "sdkUrl": "https://www.npmjs.com/package/agora-agents",
     "consoleUrl": "https://console.agora.io/",

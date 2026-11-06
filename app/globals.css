@@ -4,7 +4,6 @@
 @import '../styles/agent-ui/recipes.css';
 @import '../styles/agent-ui/theme.css';
 @import '../styles/agent-ui/website-theme.css';
-@import '../styles/shopping.css';
 @import '../styles/catalog.css';
 @source "../node_modules/agora-agent-uikit/dist";
 
@@ -19,10 +18,17 @@ html {
   scroll-padding-top: 24px;
 }
 body {
+  margin: 0;
   background: var(--background);
   color: var(--foreground);
   font-family: MiSans, 'Helvetica Neue', sans-serif;
+  font-size: 14px;
   -webkit-font-smoothing: antialiased;
+}
+button,
+input,
+select {
+  font: inherit;
 }
 ::selection {
   background: var(--primary);
@@ -36,11 +42,14 @@ a,
 summary {
   touch-action: manipulation;
 }
-:focus-visible {
+:focus-visible,
+input:focus-visible,
+select:focus-visible {
   outline: 2px solid var(--ring);
   outline-offset: 3px;
 }
 button,
+select,
 summary {
   cursor: pointer;
 }

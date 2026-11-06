@@ -3,7 +3,7 @@ import { getShopifyAgentProfile, getShopifyHeaders, SHOPIFY_CATALOG_ENDPOINT } f
 
 // Shopify returns structuredContent without content; synchronous HTTP tools preserve that JSON.
 // The native MCP client's CallToolResult validator currently rejects this otherwise successful reply.
-export function getScenarioTools(..._inactiveOptions: unknown[]): LlmTool[] {
+export function getScenarioTools(): LlmTool[] {
   const meta = { 'ucp-agent': { profile: getShopifyAgentProfile() } };
   const context = { address_country: 'US', currency: 'USD', language: 'en-US' };
   const server = { method: 'POST' as const, url: SHOPIFY_CATALOG_ENDPOINT,
@@ -45,6 +45,3 @@ export function getScenarioTools(..._inactiveOptions: unknown[]): LlmTool[] {
     },
   ];
 }
-
-// An obsolete origin variable cannot reactivate the retired simulated cart/order tools.
-export function getToolBaseUrl(..._inactiveOptions: unknown[]): null { return null; }

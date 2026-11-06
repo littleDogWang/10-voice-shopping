@@ -6,7 +6,7 @@ Find real microphones and cameras from Shopify merchants, compare products again
 
 This version supports live, read-only Shopify product discovery. Compare returned products against a USD budget and send buyers to merchant websites. No cart changes, order placement, payment collection, stock reservation, saved shopping history or cross-session business records are available. Keep credentials server-only and never claim a purchase, payment or shipment was completed.
 
-The voice Agent uses Shopify Global Catalog MCP directly. The page also offers an independent product browser with search, budget filtering, variant details and merchant links. During a live conversation, Discuss by voice hands the selected product to the assistant for a fresh lookup. Retired simulated cart/order/session APIs remain disabled with HTTP 410.
+The voice Agent uses Shopify Global Catalog MCP directly. The page also offers an independent product browser with search, budget filtering, variant details and merchant links. During a live conversation, Discuss by voice hands the selected product to the assistant for a fresh lookup. A single compatibility handler returns HTTP 410 for retired simulated cart/order/session APIs.
 
 ## Run it
 
@@ -74,8 +74,12 @@ Transcript, Inspector and product display state live in page memory and disappea
 
 ## Architecture and customization
 
-See [architecture](ARCHITECTURE.md), [the public recipe](RECIPE.md), [the internal contract](docs/ai/RECIPE.md) and [the scenario guide](docs/scenario/README.md). Edit lib/agent-config.ts for voice behavior, lib/agent-tools.ts for the MCP allowlist, lib/shopify-catalog.ts for page data, lib/presentation.ts for copy and lib/runtime-profile.ts for providers.
+See [architecture](ARCHITECTURE.md), [contributor rules](AGENTS.md), [the public recipe](RECIPE.md) and [the scenario guide](docs/scenario/README.md). Edit lib/agent-config.ts for voice behavior, lib/agent-tools.ts for the MCP allowlist, lib/shopify-catalog.ts for page data, lib/presentation.ts for copy and lib/runtime-profile.ts for providers.
 
 ## Attribution
 
 Derived from [the official Agora Next.js voice quickstart](https://github.com/AgoraIO-Conversational-AI/agent-quickstart-nextjs). Retain [the license](LICENSE) and [third-party notices](THIRD_PARTY_NOTICES.md). Product data comes from [Shopify Global Catalog](https://shopify.dev/docs/agents/catalog/global-catalog).
+
+## Public display name
+
+The header, main heading and browser title all use `presentation.name`. The header subtitle describes the task without showing an internal numeric scenario ID. Build instructions also use the public name. Technical IDs and existing source URLs remain internal implementation/reference values; this UI update does not rename the Git repository.

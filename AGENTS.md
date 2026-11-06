@@ -1,12 +1,11 @@
 # Agent Development Guide
 
-This guide is for coding agents making changes in `10-voice-shopping`.
-
+This standalone demo helps users find microphones and cameras through live, read-only Shopify Catalog queries.
 
 ## Shared scenario UI requirements
 
 1. **Open the main page directly**: show the scenario explanation and task-specific start action inline. Do not add an introductory dialog, automatic welcome overlay, or Preview first step. Connecting, errors and retry feedback stay inline. Loading the page must not start a session or request microphone access.
-2. **Keep the scenario identity visible**: the scenario name, identifier and short purpose remain visible on desktop and mobile from first load and throughout the session. Activity status must not replace the scenario name.
+2. **Keep the public scenario identity visible**: the public scenario name and short purpose remain visible on desktop and mobile from first load and throughout the session. The header and main heading use the same public name. Keep internal numeric IDs out of visible page and Build copy. Activity status must not replace the scenario name.
 3. **Use our UIkit components**: adopt actual component source and accompanying theme/styles from [shczhen/agent-ui](https://github.com/shczhen/agent-ui), connected to real session data and actions. Preserve source provenance and RTC/RTM ownership.
 
 Inspect desktop/mobile direct entry, reload and inline startup failure/retry states. Confirm there is no introductory overlay and that the main start control directly starts the existing session flow. Inspect actual screenshots before acceptance. Inspector, Build and the coach phrasebook open only on explicit user actions.
@@ -23,197 +22,47 @@ Use a United States setting for fictional business examples, UI copy, Agent cont
 
 Use English for repository content, including documentation, code comments, UI copy and examples. Keep future additions and edits free of Chinese text.
 
+## Start here
 
-## Shopping scope
+Read [README.md](README.md) for setup and shopping, [ARCHITECTURE.md](ARCHITECTURE.md) for transport/tool ownership, and [RECIPE.md](RECIPE.md) for the public recipe. The [acceptance checklist](docs/scenario/acceptance.md) separates local checks from real voice acceptance.
 
-Find real microphones and cameras through live, read-only Shopify Catalog queries.
+Use Node.js 24 from .nvmrc and pnpm 9.15.9. Install with pnpm install --frozen-lockfile. Copy env.local.example to .env.local only when absent; never overwrite existing credentials. Run pnpm run doctor, pnpm run dev and pnpm run verify. Container checks use pnpm run verify:docker separately.
 
-This version supports live, read-only Shopify product discovery. Compare returned products against a USD budget and send buyers to merchant websites. No cart changes, order placement, payment collection, stock reservation, saved shopping history or cross-session business records are available. Keep credentials server-only and never claim a purchase, payment or shipment was completed.
+## Runtime ownership
 
+- components/LandingPage.tsx owns token/invite bootstrap, RTM, renewal, stop and current-page state.
+- components/ConversationComponent.tsx owns guarded RTC/toolkit initialization, transcripts and hook-owned media.
+- lib/agent-config.ts, lib/scenario-knowledge.ts and lib/prompt-context.ts own voice guidance and U.S. date context.
+- lib/agent-tools.ts exposes only SearchShopifyProducts and GetShopifyProduct.
+- lib/shopify-config.ts and lib/shopify-catalog.ts own the fixed official endpoint, profile/token, fresh page queries and normalization.
+- components/ShopifyCatalog.tsx owns search, details, variant selection and merchant links.
+- app/api owns token/invite/stop and read-only Catalog routes. One scenarios catch-all keeps retired GET/POST requests at HTTP 410.
+- Inspector, Build, the adopted UIkit source and Docker remain supported.
 
-## How to Load
+## Preserve these contracts
 
-This repository uses progressive disclosure documentation. Docs live under `docs/ai/` in three levels.
+- Voice startup requires only requester_id and channel_name. Do not create a shopping session, cart, local ledger or database.
+- Preserve RtcTokenBuilder.buildTokenWithRtm, RTM identity/UID matching and RTM readiness before RTC/toolkit mount.
+- Keep the isReady StrictMode guard and stable RTC client ref. useJoin owns leave, the microphone hook owns track cleanup, and usePublish owns publication. Never manually close a hook-owned track or disable React StrictMode.
+- Remap the toolkit's local uid=0 sentinel and retain interrupted turns. Product actions keep exact lookup context for the Agent while displaying a readable label in the transcript.
+- Use synchronous HTTP tools for Shopify MCP: the native MCP validator rejects successful structuredContent-only replies that omit content. The adapter supplies UCP metadata and U.S./USD context.
+- Keep Shopify access read-only. Do not add cart changes, ordering, payment collection, stock reservation, shipping, refunds or persistent shopping history.
+- Use fresh Catalog replies, no-store requests/responses and original merchant image URLs. Do not cache results, re-host images or copy live listings into fixtures.
+- Prices use currency minor units. Unknown price/stock remains unknown; inferred descriptions are not verified specifications. The merchant confirms final totals and delivery.
+- NEXT_PUBLIC_AGORA_APP_ID is public and required at build/runtime. NEXT_AGORA_APP_CERTIFICATE and any optional SHOPIFY_CATALOG_ACCESS_TOKEN stay server-only. Local trials may use Shopify's hosted example UCP profile.
+- Retain source attribution, licenses and font notices.
 
-1. Read [docs/ai/L0_repo_card.md](docs/ai/L0_repo_card.md) to identify the repo.
-2. Load ALL 8 files in [docs/ai/L1/](docs/ai/L1/). They are small — load all upfront.
-3. Follow L2 deep-dive links only when L1 isn't detailed enough. The index is at [docs/ai/L1/L2/_index.md](docs/ai/L1/L2/_index.md).
+## Public presentation ownership
 
-This repo is a standalone scenario derivative of the official voice quickstart. Also read [docs/ai/RECIPE.md](docs/ai/RECIPE.md) when evaluating extension points, invariants, or stable contracts.
+`lib/presentation.ts` owns the single public `name`, purpose and summary. The header and main heading both render that name; `app/layout.tsx` derives browser metadata from it. There is no separate headline field. Internal IDs stay available for diagnostics and configuration, without being rendered as public identity text.
 
-The sections below (Start Here, Patterns, Anti-Patterns, etc.) remain the canonical contributor handbook for hands-on work; the `docs/ai/` tree is the structured summary used by AI agents.
+## Verification and maintenance
 
-## Start Here
+Run pnpm run verify for repository checks, lint, types, mocked startup, Shopify HTTP/error cases, transcript/Inspector/prompt checks and build. Keep real Catalog traffic, screenshots, simulated media, human speech and Docker evidence distinct.
 
-- Read [README.md](./README.md) for setup, commands, verification, and deployment.
-- Use [docs/ai/RECIPE.md](docs/ai/RECIPE.md) for this scenario's extension points, invariants and stable contracts.
-- Use [docs/ai/L1/L2/from_scratch_bootstrap.md](docs/ai/L1/L2/from_scratch_bootstrap.md) for the baseline implementation map.
-- Use [docs/ai/L1/L2/transcript_pipeline.md](docs/ai/L1/L2/transcript_pipeline.md) for transcript and RTM behavior.
-- For layout and responsibilities inside `components/`, `app/api/`, and `lib/`, use [docs/ai/L1/03_code_map.md](docs/ai/L1/03_code_map.md) and [docs/ai/L1/02_architecture.md](docs/ai/L1/02_architecture.md).
+Inspect actual desktop/mobile screenshots after visible changes. Transcript changes also need live growth, hidden arrivals, paused history and Scroll to end checks.
 
-## Current System Shape
-
-- App shell: Next.js 16 App Router, React 19, and TypeScript
-- Client RTC: `agora-rtc-react` hooks over `agora-rtc-sdk-ng`
-- Messaging: `agora-rtm` for transcripts, agent state, metrics, and error events
-- Toolkit core: `agora-agent-client-toolkit` for `AgoraVoiceAI`, transcript helpers, and turn status
-- UI components: vendored agent-ui source, scenario-01 theme, application-owned activity canvas; see THIRD_PARTY_NOTICES.md.
-- Server SDK: `agora-agents` for managed agent session startup
-- API routes: token generation, agent invite, chat, and stop routes live in `app/api`
-- Default agent config: Agora-managed STT, LLM and TTS. `.env.local` requires the two Agora project credentials; no business callback or storage configuration is used.
-
-## Supported Modes
-
-The browser uses Agora RTC for audio and RTM for transcript and Agent events. The managed Agent connects directly to Shopify Global Catalog MCP with only search and product-detail HTTP adapters. Next.js signs Agora credentials, starts/stops the Agent and proxies fresh Catalog queries for the on-page product browser. No public callback tunnel, database, result store or application-managed cart is needed.
-
-Use Node.js 22+ and pnpm 9.15.9. Copy env.local.example to .env.local only when absent. Supply the public App ID at build and runtime and keep the App Certificate server-only. Run pnpm run verify:docker separately for container acceptance.
-
-## Routing / Ownership
-
-- UI and RTC/RTM client lifecycle live in `components`.
-- Browser-facing API routes live in `app/api`.
-- Constants, Agent configuration, read-only MCP connections, Catalog normalization, presentation and source guidance live in `lib`; this repo owns its complete implementation.
-- Types live in `types`; business documentation lives in `docs/scenario`. Do not reintroduce a root multi-scenario registry.
-- If a workflow, request contract, or ownership boundary changes, update `README.md`, `AGENTS.md`, and the relevant `docs/ai/` files in the same change.
-
-## Key Files
-
-- `app/api/generate-agora-token/route.ts`: issues RTC + RTM tokens for the browser user.
-- `app/api/invite-agent/route.ts`: starts the managed agent session; edit here for system prompt, VAD, model, or voice changes.
-- `app/api/stop-conversation/route.ts`: stops the agent session.
-- `app/api/chat/completions/route.ts`: HTTP entry for the optional custom-LLM SSE proxy; implementation and test injection live in `lib/chat-completions.ts` (not wired by default).
-- `components/LandingPage.tsx`: session bootstrap, RTM setup, provider wiring, and conversation lifecycle.
-- `components/ConversationComponent.tsx`: RTC join, mic publication, `AgoraVoiceAI` init, transcript state, and renewals.
-- `components/QuickstartConversationLayout.tsx`: in-call header, transcript rail, and controls dock.
-- `components/ScenarioInspector.tsx`: retained session metrics, evidence and manual outcomes.
-- `components/QuickstartTranscriptPanel.tsx`: live transcript rail.
-- `lib/agora.ts`: shared agent UID defaults.
-- `lib/conversation.ts`: transcript normalization and message segmentation.
-- `env.local.example`: local environment template.
-- `scripts/verify-api-contracts.ts`: route contract verification.
-
-## Patterns
-
-### Shopify Catalog
-
-The managed Agent uses HTTP-to-MCP with only SearchShopifyProducts and GetShopifyProduct. The page uses uncached /api/catalog/search and /api/catalog/product routes; lib/shopify-catalog.ts normalizes fresh replies. Do not cache Catalog responses or re-host images. Use synthetic products in tests. Optional SHOPIFY_CATALOG_ACCESS_TOKEN stays server-only, and SHOPIFY_UCP_AGENT_PROFILE_URL must be public HTTPS. Anonymous local trials use Shopify's hosted example profile.
-
-During a live conversation, Discuss by voice sends the selected identifier through the existing toolkit; voice and page searches otherwise remain independent.
-
-### StrictMode Guard (`isReady`)
-
-Both `useJoin` and `useLocalMicrophoneTrack` are gated by `isReady` to prevent double initialization in React StrictMode dev mode. The cleanup fires synchronously before any `setTimeout`, so only the real second mount's timer fires.
-
-```tsx
-const [isReady, setIsReady] = useState(false);
-useEffect(() => {
-  let cancelled = false;
-  const id = setTimeout(() => {
-    if (!cancelled) setIsReady(true);
-  }, 0);
-  return () => {
-    cancelled = true;
-    clearTimeout(id);
-    setIsReady(false);
-  };
-}, []);
-const { isConnected: joinSuccess } = useJoin(config, isReady);
-const { localMicrophoneTrack } = useLocalMicrophoneTrack(isReady);
-```
-
-### Hook Ownership
-
-- `useJoin` owns `client.leave()`; never call it manually.
-- `useLocalMicrophoneTrack` owns track lifecycle; do not manually call `.close()`.
-- `usePublish` owns publish state; mute with `track.setEnabled()` and do not manually unpublish.
-
-### AgoraVoiceAI Init
-
-Initialize `AgoraVoiceAI` from `agora-agent-client-toolkit` inside `ConversationComponent`, gated on `isReady && joinSuccess`.
-
-```tsx
-useEffect(() => {
-  if (!isReady || !joinSuccess) return;
-  // AgoraVoiceAI.init() is called here exactly once.
-}, [isReady, joinSuccess]);
-```
-
-`isReady` becomes true only after the StrictMode fake-unmount cycle completes. Once `isReady` is true, React does not double invoke the effect for later dependency changes such as `joinSuccess` becoming true.
-
-### Transcript and UI Mapping
-
-- Manage `transcript` and `agentState` through `useState` plus `ai.on(TRANSCRIPT_UPDATED, ...)` and `ai.on(AGENT_STATE_CHANGED, ...)`.
-- The toolkit uses `uid="0"` as a sentinel for the local user's speech. Remap that value to `client.uid` before passing messages into `QuickstartTranscriptPanel`, or user speech renders on the agent side.
-- Include `INTERRUPTED` turns in `messageList`; filter only `IN_PROGRESS`. If the agent's first turn is interrupted and omitted, `messageList` stays empty and the transcript panel never shows that first turn.
-
-### Tokens and Styling
-
-- RTM token access must come from `RtcTokenBuilder.buildTokenWithRtm`; a standard RTC-only token does not grant RTM access.
-- Tailwind 4 scans UIKit with the @source directive in app/globals.css.
-
-## Working Rules
-
-- Prefer the smallest change that keeps the quickstart copyable and production-style.
-- Keep RTC client creation StrictMode-safe with `useRef`, not `useMemo`.
-- Keep token generation on `RtcTokenBuilder.buildTokenWithRtm`.
-- Keep transcript UID remapping aligned with the toolkit sentinel behavior.
-- Do not require third-party vendor API keys unless the code actually introduces a BYOK provider path.
-- Keep README, AGENTS, and `docs/ai/` aligned with implementation changes.
-
-## Commands
-
-Pinned toolchain: Node.js 22+ and pnpm 9.15.9. `pnpm run verify` is canonical and includes every scenario check. `pnpm run verify:template` checks repository contracts; `pnpm run verify:docker` builds and smoke-tests the production container separately. The full command list is in [README](README.md#commands).
-
-From the repo root:
-
-```bash
-pnpm install
-pnpm run doctor
-pnpm run dev
-pnpm run verify
-```
-
-Useful narrower checks:
-
-```bash
-pnpm run lint
-pnpm run typecheck
-pnpm run verify:api
-pnpm run build
-```
-
-## Verification Safety
-
-- Safe without live Agora credentials:
-  - `pnpm run lint`
-  - `pnpm run typecheck`
-  - `pnpm run verify:api`
-  - `pnpm run build`
-- Requires local env setup but not a live Agora session:
-  - `pnpm run doctor`
-  - `pnpm run verify`
-- Often blocked inside restricted sandboxes because of port binding or process spawning:
-  - `pnpm run dev`
-
-## Anti-Patterns / What NOT To Do
-
-- Do not call `client.leave()` manually; it breaks `useJoin` cleanup.
-- Do not call `localMicrophoneTrack.close()` manually; it breaks hook ownership.
-- Do not remove the `isReady` guard.
-- Do not set `reactStrictMode: false` as a workaround.
-- Do not use the deprecated `turnDetection.type: 'agora_vad'` flat API; use `turnDetection.config.start_of_speech` and `turnDetection.config.end_of_speech`.
-- Do not replace `RtcTokenBuilder.buildTokenWithRtm` with an RTC-only token builder.
-- Do not hide SDK requirements only in `CLAUDE.md`; all agent-facing guidance belongs in `AGENTS.md`.
-
-## Done Criteria
-
-Before finishing a change:
-
-1. Run the narrowest relevant verification command.
-2. For shipped app/runtime changes, ensure `pnpm run verify` passes.
-3. If you changed files in `components/` or `app/api/`, verify that `README.md`, this file, and the relevant `docs/ai/` files still match the implementation.
-4. Update root README and affected docs when workflow, request contracts, architecture, or environment guidance changes.
-5. If the change touches workflows, interfaces, gotchas, or security details, update the matching file under [docs/ai/L1/](docs/ai/L1/) and bump `Last Reviewed` in [docs/ai/L0_repo_card.md](docs/ai/L0_repo_card.md).
+Keep README.md, AGENTS.md, RECIPE.md and the affected scenario guide/checklist aligned with behavior. Contributor instructions are consolidated here; no layered AI document tree is required.
 
 ## Git Conventions
 
@@ -239,28 +88,4 @@ Before finishing a change:
 - **No `--no-verify`** — let git hooks run normally.
 - **No git config changes** — do not modify `user.name` or `user.email`.
 
-## Doc Commands
-
-| Command         | When to use                                                  |
-| --------------- | ------------------------------------------------------------ |
-| generate docs   | No `docs/ai/` directory exists yet                           |
-| update docs     | Code changed since the `Last Reviewed` date in L0            |
-| test docs       | Verify docs give agents the right context (writes `docs/ai/test-results.md`) |
-| fix docs        | Close findings from a docs review or test run                |
-
-The generator and tester live in the [AgoraIO-Community/ai-devkit](https://github.com/AgoraIO-Community/ai-devkit) skill set. See the [progressive disclosure standard](https://github.com/AgoraIO-Community/ai-devkit/blob/main/docs/progressive-disclosure-standard.md) for the full specification.
-
-
-## Read-only Shopify integration
-
-This version supports live, read-only Shopify product discovery. Compare returned products against a USD budget and send buyers to merchant websites. No cart changes, order placement, payment collection, stock reservation, saved shopping history or cross-session business records are available. Keep credentials server-only and never claim a purchase, payment or shipment was completed.
-
-## Scenario UI alignment
-
-The local `LandingPage` UI helpers compose the inline welcome, persistent identity, activity workspace, Inspector and Build panels around existing session bootstrap. `lib/presentation.ts` loads scenario-specific content. `ConversationComponent` reports actual activity/inspection events and uses the adopted transcript and Glass controls. The product browser supports fresh search, product details and merchant links. No application-managed cart, payment or saved-result workbench is included. Tailwind 4/PostCSS, theme recipes and MiSans match scenario 01. `lib/runtime-profile.ts` displays the non-secret configured pipeline; keep it aligned with the invite route. Never treat browser fixtures as live RTC/tool acceptance.
-
-## Prompt behavior contract — 2026-11-05
-
-Keep `lib/agent-config.ts` as the prompt entry point. Use `lib/scenario-knowledge.ts` for public scenario material and `lib/prompt-context.ts` for concise conversation rules and business-local date/calendar context. Keep the source classification visible in the prompt: source guidance is not a product listing. Product facts come from fresh Shopify responses; inferred fields are not verified manufacturer specifications.
-
-Answer supported questions and continue useful advice after identifying one unavailable action. Preserve one-question turns, corrected details, honest uncertainty and the read-only shopping boundary. Keep retired simulated cart/order fixtures and tools disabled. Only Shopify's read-only Catalog tools may be exposed. Update the scenario guide and acceptance cases with behavior changes; run `pnpm run verify` and report real-model/voice acceptance separately.
+Local edits and verification do not authorize a commit. A commit does not authorize a push or GitHub write; each needs an explicit current-conversation request. Never change Git identity or bypass hooks.

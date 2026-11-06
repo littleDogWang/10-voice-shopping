@@ -1,7 +1,5 @@
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
-import path from 'node:path';
-import { pathToFileURL } from 'node:url';
 import { Agent } from 'agora-agents';
 import { NextRequest } from 'next/server';
 import { getScenarioTools } from '../lib/agent-tools';
@@ -9,14 +7,6 @@ import { SHOPIFY_CATALOG_ENDPOINT, SHOPIFY_EXAMPLE_PROFILE } from '../lib/shopif
 import { getScenarioConfig, getScenarioPrompt } from '../lib/agent-config';
 import { getScenarioPresentation } from '../lib/presentation';
 import { normalizeTranscript } from '../lib/conversation';
-
-function routeFiles(directory: string): string[] {
-  if (!fs.existsSync(directory)) return [];
-  return fs.readdirSync(directory, { withFileTypes: true }).flatMap((entry) => {
-    const file = path.join(directory, entry.name);
-    return entry.isDirectory() ? routeFiles(file) : entry.name === 'route.ts' ? [file] : [];
-  });
-}
 
 async function main() {
   const context = '\n[Catalog context: gid://shopify/ProductVariant/12345]';
@@ -46,14 +36,11 @@ async function main() {
     assert.equal(body.params.arguments.meta['ucp-agent'].profile, process.env.SHOPIFY_UCP_AGENT_PROFILE_URL || SHOPIFY_EXAMPLE_PROFILE);
     assert.equal(body.params.arguments.catalog.context.currency, 'USD');
   }
-  for (const file of routeFiles(path.join(process.cwd(), 'app/api/scenarios'))) {
-    const retired = await import(pathToFileURL(file).href);
-    for (const method of ['GET', 'POST', 'PUT', 'PATCH', 'DELETE']) {
-      if (typeof retired[method] !== 'function') continue;
-      const response = await retired[method](new NextRequest('http://localhost/api/scenarios/disabled', { method }));
-      assert.equal(response.status, 410, file);
-      assert.equal((await response.json()).error, 'business_data_not_available');
-    }
+  const retired = await import('../app/api/scenarios/[...path]/route');
+  for (const [method, handler] of [['GET', retired.GET], ['POST', retired.POST]] as const) {
+    const response = handler();
+    assert.equal(response.status, 410, method);
+    assert.equal((await response.json()).error, 'business_data_not_available');
   }
   const landing = fs.readFileSync('components/LandingPage.tsx', 'utf8');
   assert.doesNotMatch(landing, /api\/scenarios|shopping_session_id|event_session_id|followUpApi|useShopping|useFollowUps/);
@@ -62,40 +49,33 @@ async function main() {
   process.env.NEXT_AGORA_APP_CERTIFICATE = 'fedcba9876543210fedcba9876543210';
   const { POST } = await import('../app/api/invite-agent/route');
   const originalCreate = Agent.prototype.createSession;
-  const originalOrigin = process.env.TOP_TEN_SCENARIO_TOOL_BASE_URL;
   let captured: Agent | null = null;
   let sessionOptions: unknown;
   let starts = 0;
   Agent.prototype.createSession = (function (this: Agent, options: unknown) {
     captured = this;
     sessionOptions = options;
-    return { start: async () => { starts += 1; return 'conversation-only-agent'; } };
+    return { start: async () => { starts += 1; return 'read-only-shopping-agent'; } };
   }) as unknown as typeof Agent.prototype.createSession;
   try {
-    for (const origin of [undefined, 'https://legacy-tools.example.test']) {
-      if (origin) process.env.TOP_TEN_SCENARIO_TOOL_BASE_URL = origin;
-      else delete process.env.TOP_TEN_SCENARIO_TOOL_BASE_URL;
-      const response = await POST(new NextRequest('http://localhost/api/invite-agent', {
-        method: 'POST',
-        body: JSON.stringify({ requester_id: 'voice-user', channel_name: 'voice-only-channel' }),
-      }));
-      const result = await response.json();
-      assert.equal(response.status, 200, 'A voice conversation must start without a business session: ' + JSON.stringify(result));
-      assert.equal(result.agent_id, 'conversation-only-agent');
-      const actual = captured as unknown as Agent;
-      assert.equal(actual.advancedFeatures?.enable_rtm, true);
-      assert.equal(actual.advancedFeatures?.enable_tools, true);
-      assert.deepEqual(actual.llm?.tools, getScenarioTools());
-      assert.deepEqual(actual.llm?.mcp_servers ?? [], [], 'Structured-content-only Shopify replies must not use the incompatible native MCP result validator.');
-      assert.deepEqual((sessionOptions as { remoteUids: string[] }).remoteUids, ['voice-user']);
-      assert.equal(actual.instructions, getScenarioPrompt(config.id));
-    }
-    assert.equal(starts, 2);
+    const response = await POST(new NextRequest('http://localhost/api/invite-agent', {
+      method: 'POST',
+      body: JSON.stringify({ requester_id: 'voice-user', channel_name: 'shopping-channel' }),
+    }));
+    const result = await response.json();
+    assert.equal(response.status, 200, JSON.stringify(result));
+    assert.equal(result.agent_id, 'read-only-shopping-agent');
+    const actual = captured as unknown as Agent;
+    assert.equal(actual.advancedFeatures?.enable_rtm, true);
+    assert.equal(actual.advancedFeatures?.enable_tools, true);
+    assert.deepEqual(actual.llm?.tools, getScenarioTools());
+    assert.deepEqual(actual.llm?.mcp_servers ?? [], [], 'Use the HTTP adapter for structured-content-only replies.');
+    assert.deepEqual((sessionOptions as { remoteUids: string[] }).remoteUids, ['voice-user']);
+    assert.equal(actual.instructions, getScenarioPrompt(config.id));
+    assert.equal(starts, 1);
   } finally {
     Agent.prototype.createSession = originalCreate;
-    if (originalOrigin === undefined) delete process.env.TOP_TEN_SCENARIO_TOOL_BASE_URL;
-    else process.env.TOP_TEN_SCENARIO_TOOL_BASE_URL = originalOrigin;
   }
-  console.log('Read-only Shopify startup, disabled legacy writes and retired business routes passed: ' + config.id);
+  console.log('Read-only Shopify startup, retirement handler and product-context display checks passed.');
 }
-main().catch((error) => { console.error(error); process.exitCode = 1; });
+main().catch(error => { console.error(error); process.exitCode = 1; });
