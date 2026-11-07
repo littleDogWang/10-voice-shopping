@@ -2,19 +2,23 @@
 
 ## Voice
 
-The browser uses Agora RTC for audio and RTM for transcript and Agent events. The managed Agent connects directly to Shopify Global Catalog MCP with only search and product-detail HTTP adapters. Next.js signs Agora credentials, starts/stops the Agent and proxies fresh Catalog queries for the on-page product browser. No public callback tunnel, database, result store or application-managed cart is needed.
+The browser uses Agora RTC for audio and RTM for transcript and Agent events. The managed Agent connects directly to Shopify Global Catalog MCP with only search and product-detail HTTP adapters. Next.js signs Agora credentials and starts/stops the Agent. No public callback tunnel, database, result store or application-managed cart is needed.
 
 The original token, invite, RTM setup, guarded RTC mount, renewal and stop paths retain their ownership. Agent startup requires requester_id and channel_name only. lib/agent-tools.ts configures the HTTP-to-MCP endpoint and only SearchShopifyProducts and GetShopifyProduct; the optional bearer token never reaches the browser.
 
-## Product browser
+## Scenario page
 
-components/ShopifyCatalog.tsx calls GET /api/catalog/search and GET /api/catalog/product on explicit actions. lib/shopify-catalog.ts validates inputs, injects the UCP profile and U.S. context, applies a 12-second deadline and normalizes current product/variant information. Both routes and upstream fetches use no-store.
+The page keeps the shared ScenarioIdentity, QuickstartPreCallCard, ConversationWorkspace, voice controls, transcript, Inspector and Build guide. The header's FAQ trigger and components/ScenarioFaq.tsx share an existing Radix Dialog root in LandingPage. FAQ opens a right-side drawer using the same edge-panel layout as Inspector, with native disclosure items in a scrollable body. Dialog handles focus trapping, Escape, backdrop dismissal and returning focus to the trigger. It is closed by default; there is no FAQ section below the workspace or link beside the start action. Reading or expanding the FAQ starts neither a microphone session nor a Catalog request.
 
-The page displays the selected variant's price and availability and renders merchant images directly. View at store and Continue to merchant navigate to returned HTTPS links. The application creates no cart or checkout.
+There is no page-owned product browser or product-selection handoff. Voice instructions identify products and merchants by name and do not direct the caller to nonexistent page controls. Purchases happen independently on merchant websites.
 
-## Product handoff
+## Waiting feedback
 
-Page and voice searches are independent. During an active voice session, Discuss by voice sends a selected product/variant ID and the on-page budget using the existing toolkit's sendText over RTM. The prompt requires a fresh GetShopifyProduct lookup and preserves uncertainty about unsupported specifications.
+The Agent constructor configures fillerWords with enable=true, a fixed_time trigger of 1500 ms and three static phrases selected with shuffle. The SDK serializes this as properties.filler_words. Tool waits reuse the same filler configuration; there is no separate tool-only trigger or extra filler LLM request. failureMessage is a failure fallback, not a waiting trigger. Audible timing and interruption need real voice acceptance.
+
+## Read-only diagnostics
+
+GET /api/catalog/search and GET /api/catalog/product remain available for diagnostics and HTTP regression checks. The public page does not call these routes. lib/shopify-catalog.ts validates inputs, injects the UCP profile and U.S. context, applies a 12-second deadline and normalizes fresh product data. Both routes and upstream fetches use no-store.
 
 ## State and failures
 

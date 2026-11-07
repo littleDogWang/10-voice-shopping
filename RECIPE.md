@@ -6,11 +6,11 @@ Find real microphones and cameras through Shopify Global Catalog and discuss the
 
 ## 2. Try the Demo
 
-Follow [local setup](README.md#run-it). Search USB microphone with a USD 150 budget, or start voice shopping and describe your needs. Open a returned product to inspect current variant information and merchant links. During a live conversation, Discuss by voice asks the assistant to inspect that selected item.
+Follow [local setup](README.md#run-it). Choose Start voice shopping and describe your needs, such as a USB microphone for video calls under USD 150. Ask for one comparison, correct a requirement and request the product and merchant names. FAQ in the upper-right header opens the usage drawer beside Inspector and Build.
 
 ## 3. Architecture & Tech Stack
 
-The browser uses Agora RTC for audio and RTM for transcript and Agent events. The managed Agent connects directly to Shopify Global Catalog MCP with only search and product-detail HTTP adapters. Next.js signs Agora credentials, starts/stops the Agent and proxies fresh Catalog queries for the on-page product browser. No public callback tunnel, database, result store or application-managed cart is needed.
+The browser uses Agora RTC for audio and RTM for transcript and Agent events. The managed Agent connects directly to Shopify Global Catalog MCP with only search and product-detail HTTP adapters. Next.js signs Agora credentials and starts/stops the Agent. No public callback tunnel, database, result store or application-managed cart is needed.
 
 The existing Next.js 16, React 19, TypeScript, agora-agents, Agora RTC/RTM and adopted agent-ui components remain in use.
 
@@ -26,15 +26,15 @@ pnpm run doctor
 pnpm run dev
 ~~~
 
-Open http://localhost:3000. Product search works independently of microphone/session startup. The page requests microphone access only after the voice start action.
+Open http://localhost:3000. Open FAQ from the header or choose Start voice shopping. The page requests microphone access only after the voice start action.
 
 ## 6. How It Works
 
-The Agent connects to Shopify's official Global Catalog MCP with a read-only allowlist. The page uses independent no-store search/detail routes. The existing RTM sendText method hands selected products to a live conversation. Legacy simulated cart/order APIs remain disabled.
+The Agent connects to Shopify's official Global Catalog MCP with a read-only allowlist. It searches current offers and checks a candidate before recommending it. Built-in static filler words acknowledge response waits after 1500 ms, including tool waits, without an additional LLM request. The page shows the shared voice workspace; FAQ opens on demand in a right-side drawer. Legacy simulated cart/order APIs remain disabled.
 
 ## 7. Customize for Your Business
 
-Edit lib/agent-config.ts for conversation flow, lib/agent-tools.ts for the HTTP-to-MCP allowlist, lib/shopify-config.ts for the profile/token and lib/shopify-catalog.ts for page normalization. Keep product data fresh, merchant images direct, USD minor units correct and purchase completion on merchant websites.
+Edit lib/agent-config.ts for conversation flow, lib/agent-tools.ts for the HTTP-to-MCP allowlist, lib/shopify-config.ts for the profile/token and components/ScenarioFaq.tsx for usage answers. Keep product data fresh, USD minor units correct and purchase completion on merchant websites.
 
 ## 8. Deployment & Validation
 

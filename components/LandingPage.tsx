@@ -5,6 +5,7 @@ import dynamic from 'next/dynamic';
 import { ScenarioIdentity } from './ScenarioIdentity';
 import { Alert, AlertDescription } from './ui/alert';
 import { Button } from './ui/button';
+import { Dialog } from './ui/dialog';
 import type { RTMClient } from 'agora-rtm';
 import type {
   AgoraTokenData,
@@ -24,8 +25,7 @@ import {
   QuickstartPreCallCard,
 } from './QuickstartPreCallCard';
 import { ConversationWorkspace } from './ConversationWorkspace';
-import { ShopifyCatalog } from './ShopifyCatalog';
-import { DEFAULT_AGENT_UID } from '@/lib/agora';
+import { ScenarioFaq } from './ScenarioFaq';
 
 // Dynamically import the ConversationComponent with ssr disabled
 const ConversationComponent = dynamic(() => import('./ConversationComponent'), {
@@ -289,11 +289,14 @@ export default function LandingPage() {
 
   return (
     <div className="demo-shell">
-      <ScenarioIdentity
-        scenario={scenario}
-        onInspect={() => setInspectorOpen(true)}
-        onBuild={() => setBuildOpen(true)}
-      />
+      <Dialog>
+        <ScenarioIdentity
+          scenario={scenario}
+          onInspect={() => setInspectorOpen(true)}
+          onBuild={() => setBuildOpen(true)}
+        />
+        <ScenarioFaq />
+      </Dialog>
       <ConversationWorkspace
         scenario={scenario}
         activity={
@@ -396,16 +399,6 @@ export default function LandingPage() {
           </p>
         )}
       </ConversationWorkspace>
-      <ShopifyCatalog onDiscuss={showConversation && agoraData?.agentId && inspection.lifecycle === 'live' && !ending && !agentJoinError ? async (id, label, budget) => {
-        const { AgoraVoiceAI, ChatMessageType, ChatMessagePriority } = await import('agora-agent-client-toolkit');
-        await AgoraVoiceAI.getInstance().sendText(String(DEFAULT_AGENT_UID), {
-          messageType: ChatMessageType.TEXT,
-          text: 'Tell me about ' + label + '.' + (budget ? ' My budget is USD ' + budget + '.' : '') +
-            '\n[Catalog context: ' + id + ']',
-          priority: ChatMessagePriority.INTERRUPTED,
-          responseInterruptable: true,
-        });
-      } : undefined} />
       <ScenarioInspector
         scenario={scenario}
         snapshot={inspection}

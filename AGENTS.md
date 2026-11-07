@@ -34,9 +34,9 @@ Use Node.js 24 from .nvmrc and pnpm 9.15.9. Install with pnpm install --frozen-l
 - components/ConversationComponent.tsx owns guarded RTC/toolkit initialization, transcripts and hook-owned media.
 - lib/agent-config.ts, lib/scenario-knowledge.ts and lib/prompt-context.ts own voice guidance and U.S. date context.
 - lib/agent-tools.ts exposes only SearchShopifyProducts and GetShopifyProduct.
-- lib/shopify-config.ts and lib/shopify-catalog.ts own the fixed official endpoint, profile/token, fresh page queries and normalization.
-- components/ShopifyCatalog.tsx owns search, details, variant selection and merchant links.
-- app/api owns token/invite/stop and read-only Catalog routes. One scenarios catch-all keeps retired GET/POST requests at HTTP 410.
+- lib/shopify-config.ts and lib/shopify-catalog.ts own the fixed official endpoint, profile/token, diagnostic queries and normalization.
+- components/ScenarioFaq.tsx owns the FAQ drawer and usage answers; styles/faq.css owns its scrolling and transitions. The header trigger shares the existing Dialog root with the drawer in LandingPage.
+- app/api owns token/invite/stop and diagnostic read-only Catalog routes. The Agent constructor owns static waiting fillers. One scenarios catch-all keeps retired GET/POST requests at HTTP 410.
 - Inspector, Build, the adopted UIkit source and Docker remain supported.
 
 ## Preserve these contracts
@@ -44,7 +44,10 @@ Use Node.js 24 from .nvmrc and pnpm 9.15.9. Install with pnpm install --frozen-l
 - Voice startup requires only requester_id and channel_name. Do not create a shopping session, cart, local ledger or database.
 - Preserve RtcTokenBuilder.buildTokenWithRtm, RTM identity/UID matching and RTM readiness before RTC/toolkit mount.
 - Keep the isReady StrictMode guard and stable RTC client ref. useJoin owns leave, the microphone hook owns track cleanup, and usePublish owns publication. Never manually close a hook-owned track or disable React StrictMode.
-- Remap the toolkit's local uid=0 sentinel and retain interrupted turns. Product actions keep exact lookup context for the Agent while displaying a readable label in the transcript.
+- Remap the toolkit's local uid=0 sentinel and retain interrupted turns.
+- Keep the public page focused on the shared voice workspace and usage FAQ. Do not add a manual product browser or direct callers to removed product/purchase controls.
+- Keep FAQ in the upper-right header beside Inspector and Build. Open it only on request in a right-side drawer; do not restore a page-footer FAQ or a secondary link next to the voice start action. Preserve keyboard focus, Escape/backdrop dismissal and internal scrolling.
+- Use the platform fillerWords configuration for waiting feedback: static phrases after a 1500 ms response wait. Keep failureMessage separate. Tool waits reuse the same configuration; do not add a second LLM request to generate fillers.
 - Use synchronous HTTP tools for Shopify MCP: the native MCP validator rejects successful structuredContent-only replies that omit content. The adapter supplies UCP metadata and U.S./USD context.
 - Keep Shopify access read-only. Do not add cart changes, ordering, payment collection, stock reservation, shipping, refunds or persistent shopping history.
 - Use fresh Catalog replies, no-store requests/responses and original merchant image URLs. Do not cache results, re-host images or copy live listings into fixtures.

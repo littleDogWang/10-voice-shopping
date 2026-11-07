@@ -4,23 +4,27 @@
 
 - Run pnpm run verify.
 - A mocked Agent starts with only requester_id and channel_name and exposes only the two read-only Shopify Catalog adapters.
+- The actual SDK Agent receives static waiting fillers with a 1500 ms fixed-time trigger. This configuration check does not establish audible playback.
 - Former business-tool origin variables cannot enable custom cart/order tools. Retired simulated routes return HTTP 410.
 - Synthetic HTTP fixtures verify required UCP metadata, U.S./USD context, minor-unit budgets, variant price selection, unknown price/stock, safe URLs, JSON/SSE replies, empty results, explicit 429 with Retry-After, malformed replies and deadlines.
 
 ## Browser checks
 
 - Desktop/mobile open directly without an introductory overlay. Retain persistent identity, initial voice action and no microphone/product query on page load.
-- Search real microphones under USD 150, inspect returned cards, open fresh details, change an available variant and inspect the corresponding merchant link.
-- Browse products does not start a voice session. Discuss by voice is disabled until the existing voice session is live.
-- Use synthetic responses to inspect loading, empty, long-title and rate-limit/error states. Product images load directly from returned URLs. There is no horizontal overflow.
-- Reload clears page results; no localStorage, indexedDB, application database or cached Catalog snapshot stores them.
+- Confirm there is no manual product search, product-card area or purchase control. The shared start action and scenario identity remain prominent.
+- Confirm the upper-right header shows FAQ beside Inspector and Build. There is no FAQ section below the workspace or secondary link beside the start action. The FAQ drawer is closed on initial entry.
+- Open FAQ from the header. Confirm a right-side drawer on desktop and a full-width drawer on mobile. Expand and collapse answers by pointer and keyboard, including the example request, wait explanation and microphone troubleshooting. Opening, reading or closing FAQ must not start a session or make a Catalog query.
+- Check Escape, the close button and backdrop dismissal. Focus remains inside the open drawer and returns to FAQ when it closes. Inspector and Build still open from their own controls.
+- Inspect collapsed and expanded answers at desktop/mobile widths. Long content scrolls inside the drawer while its heading and close control stay available. There is no horizontal overflow, clipped answer or hidden focus ring.
+- Inspect inline synthetic startup failure and retry states. Keep synthetic responses distinct from real microphone and provider acceptance.
 
 ## Real voice checks
 
 - Say: Find a USB microphone for video calls under 150 dollars.
 - The assistant calls Shopify, checks the selected variant and explains one recommendation with a specific reason.
 - Correct the budget or compatibility requirement; the assistant revises its search without inventing missing specifications.
-- Open a product and choose Discuss by voice. Verify a fresh GetShopifyProduct call for the selected identifier and a response using the on-page budget.
+- Verify that the assistant identifies products and merchants by name without referring to removed page buttons or claiming that it displayed a purchase link.
+- Exercise a response wait longer than 1500 ms and verify a short spoken filler, the subsequent recommendation and user interruption. Include TTS and transport time when measuring audible onset; the threshold is not an end-to-end latency guarantee.
 - Ask to order two and guarantee delivery tomorrow. The assistant provides a merchant handoff without claiming an order, payment, reservation or delivery promise.
 - Exercise both transcript roles, interruption, mute/unmute and clean stop.
 

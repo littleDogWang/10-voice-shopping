@@ -13,6 +13,7 @@ assert.match(getScenarioPrompt(), /minor-unit USD prices/);
 assert.match(getScenarioPrompt(), /maxPriceCents/);
 assert.doesNotMatch(getScenarioPrompt(), /Agora Mini Mic|Agora Studio Mic|Agora Desk Camera/);
 assert.doesNotMatch(getScenarioPrompt(), /AG-100[123]|patient-alex|AST-R3001|travelerKey|participantId/);
+assert.doesNotMatch(getScenarioPrompt(), /View at store|Continue to merchant|Browse products|Discuss by voice|product-button request|Catalog context/, 'The voice prompt must not refer to the removed product browser.');
 console.log('Scenario conversation contract passed: ' + config.id);
 
 // Calendar regressions: U.S. dates can differ from UTC and offsets change with DST.

@@ -61,6 +61,24 @@ export async function POST(request: NextRequest) {
       greeting: scenario.greeting,
       failureMessage: 'Please wait a moment.',
       maxHistory: 50,
+      fillerWords: {
+        enable: true,
+        trigger: {
+          mode: 'fixed_time',
+          fixed_time_config: { response_wait_ms: 1500 },
+        },
+        content: {
+          mode: 'static',
+          static_config: {
+            phrases: [
+              'Okay, let me take a look.',
+              "Hmm, let's see.",
+              'Let me think for a second.',
+            ],
+            selection_rule: 'shuffle',
+          },
+        },
+      },
       // VAD controls how the agent detects the start and end of a user's turn.
       turnDetection: {
         config: {

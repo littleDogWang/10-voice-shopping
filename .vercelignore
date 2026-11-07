@@ -4,4 +4,10 @@ README.md
 .gitignore
 .DS_Store
 node_modules
-*.log 
+*.log
+.env*
+.next*
+.vercel
+.agora
+.scenario-data
+*.tsbuildinfo

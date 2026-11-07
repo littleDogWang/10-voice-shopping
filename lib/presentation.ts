@@ -5,7 +5,7 @@ export const presentation: ScenarioPresentation = {
   "id": "10-voice-shopping",
   "name": "Voice Shopping Assistant",
   "purpose": "Find microphones and cameras from real stores",
-  "summary": "Find real microphones and cameras, compare options for your budget, and continue to the store when you are ready.",
+  "summary": "Talk through your needs, compare real microphones and cameras, and find an option within your budget.",
   "featuresHeading": "In this conversation",
   "features": [
     {
@@ -18,7 +18,7 @@ export const presentation: ScenarioPresentation = {
     },
     {
       "emoji": "📝",
-      "title": "Merchant product links"
+      "title": "Merchant guidance"
     }
   ],
   "builtWith": [
@@ -40,10 +40,10 @@ export const presentation: ScenarioPresentation = {
     }
   ],
   "developer": {
-    "sourceUrl": "https://github.com/littleDogWang/10-voice-shopping",
+    "sourceUrl": "https://github.com/AgoraIO-Community/voice-shopping-assistant",
     "runCommand": "pnpm install --frozen-lockfile\npnpm run doctor\npnpm run dev",
     "skillsCommand": "npx skills add github:AgoraIO/skills",
-    "assistantPrompt": "Work in this existing Voice Shopping Assistant voice demo. Preserve Agora RTC/RTM lifecycle and read-only Shopify Catalog MCP tools. Keep product queries uncached, render merchant images from their original URLs, and send buyers to merchant websites. Preserve disabled simulated cart/order routes and do not add persistence or payment collection.",
+    "assistantPrompt": "Work in this existing Voice Shopping Assistant voice demo. Preserve Agora RTC/RTM lifecycle, read-only Shopify Catalog tools and the usage FAQ. Keep the page focused on voice conversations, product queries uncached and credentials server-only. Preserve the built-in static waiting fillers and disabled simulated cart/order routes. Do not add persistence or payment collection.",
     "docsUrl": "https://docs.agora.io/en/ai/build/build-server-client",
     "sdkUrl": "https://www.npmjs.com/package/agora-agents",
     "consoleUrl": "https://console.agora.io/",

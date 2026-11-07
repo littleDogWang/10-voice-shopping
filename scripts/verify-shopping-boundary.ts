@@ -68,6 +68,14 @@ async function main() {
     const actual = captured as unknown as Agent;
     assert.equal(actual.advancedFeatures?.enable_rtm, true);
     assert.equal(actual.advancedFeatures?.enable_tools, true);
+    assert.equal(actual.fillerWords?.enable, true, 'Waiting feedback must use the built-in filler configuration.');
+    assert.deepEqual(actual.fillerWords?.trigger, {
+      mode: 'fixed_time',
+      fixed_time_config: { response_wait_ms: 1500 },
+    });
+    assert.equal(actual.fillerWords?.content?.mode, 'static', 'Waiting feedback must not require another LLM request.');
+    const phrases = actual.fillerWords?.content?.static_config?.phrases ?? [];
+    assert.ok(phrases.length > 0 && phrases.every(phrase => phrase.trim().length > 0 && phrase.trim().split(/\s+/).length <= 50));
     assert.deepEqual(actual.llm?.tools, getScenarioTools());
     assert.deepEqual(actual.llm?.mcp_servers ?? [], [], 'Use the HTTP adapter for structured-content-only replies.');
     assert.deepEqual((sessionOptions as { remoteUids: string[] }).remoteUids, ['voice-user']);
